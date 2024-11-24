@@ -1,5 +1,5 @@
 ---
-title: "友链"
+title: "友链|Links"
 links:
   - title: 本站点的GitHub仓库
     description: 本站点托管于GitHub Pages

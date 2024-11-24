@@ -2,19 +2,23 @@
 title: Hello World
 description: 欢迎来到我的博客——
 slug: hello-world
-date: 2024-11-23 9:00:00+0000
-image: cover.jpg
+date: 2024-11-24 7:00:00+0000
+image: cover.png
 categories:
-    - Example Category
+    - 文档
 tags:
-    - Example Tag
+    - 文档
 weight: 1
 ---
 
-Welcome to Hugo theme Stack. This is your first post. Edit or delete it, then start writing!
+# Welcome
 
-For more information about this theme, check the documentation: https://stack.jimmycai.com/
+欢迎来到我的博客！本站点仓库建于`2024/11/23`，本篇文章写于`2024/11/24`的晚上。想写的东西有很多，但到真正要落笔时却有些踌躇不前。
 
-Want a site like this? Check out [hugo-theme-stack-stater](https://github.com/CaiJimmy/hugo-theme-stack-starter)
+# 寄语
 
-> Photo by [Pawel Czerwinski](https://unsplash.com/@pawel_czerwinski) on [Unsplash](https://unsplash.com/)
+从我上踏入计算机科学与技术这个专业开始，便一直想拥有一个技术博客。但由于种种原因，比较流行的博客平台如CSDN、博客园、知乎都没有留住我，我也够懒，时至今日才动手搭建属于自己的博客站点。所幸大多精彩的技术知识没有因此错过，它们大多被我记录于OneNote或是Obsidian中，在未来我也会视情况将这些留存的技术文章或是学习笔记迁移到这个站点。
+
+随着大学生活的推移，我有了很多足够精彩的经历，但很少在社交媒体发文，因此也愈发希望能够在某个地方记录这些转瞬即逝的想法。在起初的构想中，技术博文和生活随笔放在不同的站点或许会更有利于读者，但想来还是过于折腾，就索性放在一起罢。
+
+总之，在这个大雪纷飞的夜晚，Kambri's Blog正式诞生了！

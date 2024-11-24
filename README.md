@@ -2,6 +2,8 @@
 
 这是Kambri的个人博客，网站由Hugo构建，使用Stack主题，并托管于Github Page。
 
+如果你喜欢本站点的话，欢迎给这个仓库一个star，感谢。
+
 站点：https://kaigezheng.github.io/
 
 # TODOLIST
