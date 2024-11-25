@@ -16,9 +16,33 @@ url = "https://github.com/KaigeZheng"
 icon = "brand-github"
 
 [[social]]
-identifier = "twitter"
-name = "Twitter"
-url = "https://twitter.com"
+identifier = "zhihu"
+name = "知乎"
+url = "https://www.zhihu.com/people/yuan-shen-lin-xu-8/posts"
 
 [social.params]
-icon = "brand-twitter"
+icon = "brand-zhihu"
+
+[[social]]
+identifier = "wechat"
+name = "微信"
+url = "kambri2003"
+
+[social.params]
+icon = "brand-wechat"
+
+[[social]]
+identifier = "email"
+name = "邮箱"
+url = "kambri2003@outlook.com"
+
+[social.params]
+icon = "brand-email"
+
+#[[social]]
+#identifier = "qq"
+#name = "QQ"
+#url = "#"
+#
+#[social.params]
+#icon = "brand-qq"
