@@ -2,8 +2,8 @@
 title: Hello World
 description: 欢迎来到我的博客——
 slug: hello-world
-date: 2024-11-24 18:54:00+0000
-image: cover.png
+date: 2024-11-24 18:54:00+0800
+image: img/cover.png
 categories:
     - 文档
 tags:
@@ -53,4 +53,4 @@ weight: 1
 
 总之，在这个大雪纷飞的夜晚，Kambri's Blog正式诞生了！
 
-![今天的雪](1.jpg) ![和计算机学院楼](2.jpg)
+![今天的雪](img/1.jpg) ![和计算机学院楼](img/2.jpg)
