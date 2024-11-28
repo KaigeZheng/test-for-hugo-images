@@ -46,7 +46,7 @@ icon = "brand-email"
 [[social]]
 identifier = "rss"
 name = "RSS"
-url = "index.xml"
+url = "https://kaigezheng.github.io/index.xml"
 
 [social.params]
 icon = "brand-rss"
