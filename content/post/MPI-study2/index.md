@@ -2,7 +2,7 @@
 title: MPI学习笔记——集合通信
 description: MPI学习笔记（二）
 slug: mpi2
-date: 2024-11-27 0:54:00+0800
+date: 2024-11-27 17:34:00+0800
 image: img/cover.png
 categories:
     - 技术
