@@ -4,6 +4,7 @@ description: MPI学习笔记（二）
 slug: mpi2
 date: 2024-11-27 17:34:00+0800
 image: img/cover.png
+math: true
 categories:
     - 技术
     - MPI

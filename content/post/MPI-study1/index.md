@@ -3,6 +3,7 @@ title: MPI学习笔记——消息传递模型和P2P通信
 description: MPI学习笔记（一）
 slug: mpi1
 date: 2024-11-27 13:22:00+0800
+math: true
 image: img/cover.png
 categories:
     - 技术
