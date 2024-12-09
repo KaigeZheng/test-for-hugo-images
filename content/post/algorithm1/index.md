@@ -7,8 +7,10 @@ math: true
 image: img/cover.jpg
 categories:
     - 文档
+    - 算法
 tags:
     - 文档
+    - 算法
 weight: 5
 ---
 
