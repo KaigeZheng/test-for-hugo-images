@@ -36,8 +36,8 @@ icon = "brand-wechat"
 
 [[social]]
 identifier = "email"
-name = "邮箱"
-url = "kambri2003@outlook.com"
+name = "邮箱(kambrikg@outlook.com)"
+url = "mailto:kambrikg@outlook.com"
 weight = 4
 
 [social.params]
