@@ -27,8 +27,8 @@ icon = "brand-zhihu"
 
 [[social]]
 identifier = "wechat"
-name = "微信"
-url = "kambri2003"
+name = "微信(kambri2003)"
+url = "wechat-kambri.jpg"
 weight = 3
 
 [social.params]
