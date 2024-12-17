@@ -31,11 +31,13 @@ weight: 1
 
 - [x] ~~_~~添加评论系统，可能是[utterances](https://github.com/utterance)~~_~~（Finished，确实是`utterances`）
 
+- [x] ~~配置bing、google的站点地图~~（目前已经能被[bing](https://www.bing.com/)、[google](https://google.com/)搜索到）
+
 - [ ] Last but not least，更多文章
 
 博文更新计划TODOLIST：
 
-- [ ] MPI、算法导论等学习笔记（迁移）
+- [x] MPI、算法导论等学习笔记（迁移）
 
 - [ ] 运维记录（迁移）
 

@@ -1,7 +1,7 @@
 ---
 title: 成年后的第一次旅行——川渝
 description: 旅行回忆录（二）
-slug: 2
+slug: travel2
 date: 2024-12-04 17:07:00+0800
 image: img/cover.jpg
 categories:

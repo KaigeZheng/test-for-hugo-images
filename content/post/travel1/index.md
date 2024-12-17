@@ -1,7 +1,7 @@
 ---
 title: 人生苦旅的起点，也是梦开始的地方——上海
 description: 旅行回忆录（一）
-slug: 1
+slug: travel1
 date: 2024-11-30 17:18:00+0800
 image: img/cover.jpg
 categories:
