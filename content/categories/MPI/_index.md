@@ -1,7 +1,7 @@
 ---
 title: MPI
 description: Message Passing Interface
-image:
+image: #"open-mpi-logo.png"
 
 # Badge style
 style:
