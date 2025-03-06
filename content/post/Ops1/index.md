@@ -14,13 +14,13 @@ tags:
 weight: 9
 ---
 
-这段时间和机房打交道比较多，所以来总结一下这段时间的运维经验，也方便学弟学妹未来搭建集群。
+这段时间和机房打交道比较多，所以来总结一下这段时间的运维经验，也方便学弟学妹未来参与搭建集群。
 
 ## 硬件
 
 ### 组装
 
-新采购的整机服务器，硬盘、内存条、网卡都是在的，因此只需要把计算卡插入PCIE插槽即可。务必保证启动时，主电源和备用电源都是亮灯状态。
+新采购的整机服务器，硬盘、内存条、网卡都是在的，因此只需要把计算卡插入PCIE插槽即可。务必保证启动时，主电源和备用电源都是亮灯状态。在ASC Final中，硬盘、内存条、网卡都是得自己插的。
 
 ![服务器内部](img/1.jpg)
 
@@ -35,6 +35,26 @@ weight: 9
 ![Rufus制作启动盘](img/3.png) ![UltraISO制作启动盘](img/4.png)
 
 ## 软件
+
+### 网络配置
+
+一般在系统安装时先不配置，安装完成后通过`ip link show`查看网口名。通过`vim /etc/netplan/50-cloud-init.yaml`，配置如下：
+
+```bash
+# ...
+network:
+    ethernets:
+        ens16f0:
+            addresses:
+            - <A.B.C.D>/24
+            nameservers:
+                addresses: []
+                search: []
+            routes:
+            -   to: default
+                via: <A.B.C.D>
+    version: 2
+```
 
 ### 设置root密码
 
@@ -230,7 +250,7 @@ sudo reboot
 
 查看GPU型号：`lspci | grep -i nvidia`
 
-驱动下载：https://www.nvidia.com/en-us/drivers/
+驱动下载：[NVIDIA Driver](https://www.nvidia.com/en-us/drivers/)
 
 > A800/V100 for CUDA12.6：
 > [Data Center Driver for Linux x64 560.35.03 | Linux 64-bit | NVIDIA](https://www.nvidia.com/en-us/drivers/details/231430/)
