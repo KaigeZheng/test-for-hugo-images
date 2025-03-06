@@ -208,6 +208,7 @@ MPI_Reduce(
 + `MPI_BOR`按位或
 + `MPI_MAXLOC`返回最大值和所在进程的rank
 + `MPI_MINLOC`返回最小值和所在进程的rank
+
 下面是`MPI_Reduce`通信模式的说明：
 
 ![求和归约1](img/11.png)
