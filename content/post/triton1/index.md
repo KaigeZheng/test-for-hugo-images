@@ -81,7 +81,7 @@ def add(x: torch.Tensor, y: torch.Tensor):
 
 核心只有两行代码，
 
-+ `grid = lambda meta: (triton.cdiv(n_elements, meta['BLOCK_SIZE']), )`定义一个grid匿名函数，用`triton.cdiv`计算$\lceil\frac{n}{BLOCK\_SIZE}\rceil$
++ `grid = lambda meta: (triton.cdiv(n_elements, meta['BLOCK_SIZE']), )`定义一个grid匿名函数，用`triton.cdiv`计算$\lceil\frac{n}{BLOCKSIZE}\rceil$
 
 + `add_kernel[grid](x, y, output, n_elements, BLOCK_SIZE=1024)`调用`grid(meta)`来确定网格大小并启动GPU线程块，并将`(x, y, output, n_elements, BLOCK_SIZE=1024)`传递给kernel
 
@@ -154,6 +154,150 @@ vector-add-performance:
 15  134217728.0  830.445624  831.344043
 ```
 
+![V100上向量加的表现](img/1.png)
+
 ## Fused Softmax
 
-TODO
+### Naive Softmax
+
+$$softmax(z_{i})=\frac{e^{z_{i}}}{\Sigma_{j=1}^{n}e^{z_{j}}}=\frac{exp(z_{i})}{\Sigma_{j=1}^{n}exp(z_{j})}$$
+
+```python
+def naive_softmax(x):
+    """Compute row-wise softmax of X using native pytorch
+    """
+    # read  MN elements ; write M  elements
+    x_max = x.max(dim=1)[0]
+    # read MN + M elements ; write MN elements
+    z = x - x_max[:, None]
+    # read  MN elements ; write MN elements
+    numerator = torch.exp(z)
+    # read  MN elements ; write M  elements
+    denominator = numerator.sum(dim=1)
+    # read MN + M elements ; write MN elements
+    ret = numerator / denominator[:, None]
+    # in total: read 5MN + 2M elements ; wrote 3MN + 2M elements
+    return ret
+```
+
+> 由于softmax具有平移不变性，而exp(x)容易上溢，因此需要减去最大元素：
+> $$softmax(x)=softmax(x+c)$$
+
+对于naive的softmax实现，需要从DRAM中读取$5MN+2M$个元素，并写回$3MN+2M$个元素，IO共需要$8MN+4M$个单位，显然是不理想的。理想情况下，只读写一次并完成所有计算，因此可以得到理想加速约为4倍（$\frac{8MN+4M}{2MN}$）。
+
+### Compute Kernel
+
+softmax kernel需要补充的内容都写在注释里了：
+
+```python
+@triton.jit
+def softmax_kernel(output_ptr, input_ptr, input_row_stride, output_row_stride, n_rows, n_cols, BLOCK_SIZE: tl.constexpr,
+                   num_stages: tl.constexpr):
+    # kernel思路 : 让多个program并行处理不同的行
+    row_start = tl.program_id(0)    # program ID
+    row_step = tl.num_programs(0)   # program 数量
+    # 遍历每一行, tl.range(..)行索引list
+    ## 线程0处理:[0, row_step, 2 * row_step, ...]
+    ## 线程1处理:[1, 1 + row_step, 1 + 2 * row_step, ...]
+    ## 线程2处理:[2, 2 + row_step, 2 + 2 * row_step, ...]
+    ## ... **实现了不同program处理不同row**
+    for row_idx in tl.range(row_start, n_rows, row_step, num_stages=num_stages):
+        # row_start_ptr指向当前行的首个元素
+        row_start_ptr = input_ptr + row_idx * input_row_stride
+        # 计算列索引
+        col_offsets = tl.arange(0, BLOCK_SIZE)      # 列偏移, 生成[0, BLOCK_SIZE - 1]
+        input_ptrs = row_start_ptr + col_offsets    # 当前行首 + 列偏移
+        # 计算mask
+        mask = col_offsets < n_cols # 注意是用列偏移和列数生成的mask
+        row = tl.load(input_ptrs, mask=mask, other=-float('inf'))   # 根据mask读取内存, 超出n_cols的部分填充为-∞
+        row_minus_max = row - tl.max(row, axis=0)
+        # softmax
+        numerator = tl.exp(row_minus_max)
+        denominator = tl.sum(numerator, axis=0)
+        softmax_output = numerator / denominator
+        # Write back output to DRAM
+        output_row_start_ptr = output_ptr + row_idx * output_row_stride # 计算输出索引
+        output_ptrs = output_row_start_ptr + col_offsets                # 计算输出内存地址
+        tl.store(output_ptrs, softmax_output, mask=mask)
+```
+
+认真看完源码后，会发现softmax kernel的实现思路并不难，每个program处理输入矩阵的一**组**行（按program数量跨步处理），执行完softmax操作后写回DRAM。
+
+> Note: Triton的一个重要限制是**BLOCK_SIZE**必须是$2^n$的元素
+
+同样，我们需要一个辅助函数。在此之前，`triton.runtime.driver.active.utils.get_device_properties(torch.cuda.current_device())`非常有用，能够帮助我们收集必要的计算卡硬件信息。
+
+```python
+device = torch.cuda.current_device()
+properties = driver.active.utils.get_device_properties(device)
+NUM_SM = properties["multiprocessor_count"]
+NUM_REGS = properties["max_num_regs"]
+SIZE_SMEM = properties["max_shared_mem"]
+WARP_SIZE = properties["warpSize"]
+target = triton.runtime.driver.active.get_current_target()
+kernels = {}
+```
+
+Tesla V100-PCIE-32GB的输出如下：
+
+```text
+{
+    'max_shared_mem': 98304,          # 共享内存
+    'max_num_regs': 65536,            # 最大寄存器数
+    'multiprocessor_count': 80,       # SM 数量
+    'warpSize': 32,                   # WARP 大小
+    'sm_clock_rate': 1380000,         # SM 频率 (Hz)
+    'mem_clock_rate': 877000,         # 内存频率 (Hz)
+    'mem_bus_width': 4096             # 内存总线宽度 (bit)
+}
+```
+
+辅助函数如下：
+
+```python
+def softmax(x):
+    n_rows, n_cols = x.shape
+    # BLOCK_SIZE是大于矩阵列数的最小二次幂
+    BLOCK_SIZE = triton.next_power_of_2(n_cols)
+    num_warps = 8
+    # 如果 GPU 共享内存（SMEM）足够大（>200KB），就用 4 个流水线阶段，否则用 2 个
+    num_stages = 4 if SIZE_SMEM > 200000 else 2
+    # Allocate output
+    y = torch.empty_like(x)
+
+    # pre-compile kernel to get register usage and compute thread occupancy.
+    # 预编译内核以获取寄存器使用情况并计算线程占用情况。
+    kernel, num_programs = kernels.get(BLOCK_SIZE, (None, 0))
+    if kernel is None:
+        kernel = softmax_kernel.warmup(y, x, x.stride(0), y.stride(0), n_rows, n_cols, BLOCK_SIZE=BLOCK_SIZE,
+                                       num_stages=num_stages, num_warps=num_warps, grid=(1, ))
+        kernel._init_handles()
+        n_regs = kernel.n_regs
+        size_smem = kernel.metadata.shared
+        occupancy = NUM_REGS // (n_regs * WARP_SIZE * num_warps)
+        occupancy = min(occupancy, SIZE_SMEM // size_smem)
+        num_programs = NUM_SM * occupancy
+        kernels[BLOCK_SIZE] = (kernel, num_programs)
+
+
+    num_programs = min(num_programs, n_rows)
+
+
+    # Create a number of persistent programs.
+    # 创建一些持久化程序。
+    kernel[(num_programs, 1, 1)](
+        y,
+        x,
+        x.stride(0),
+        y.stride(0),
+        n_rows,
+        n_cols,
+    )
+    return y
+```
+
+在预编译kernel前需要确定`BLOCK_SIZE`大小、warp数量、流水线阶段并分配输出tensor空间。更多的流水线阶段可以提高并行效率，但会消耗更多的shared memory。
+
+在预编译阶段，`softmax_kernel.warmup(...)`预编译softmax kernel，用于获取寄存器使用情况、shared memory使用量、线程占用率，并通过`kernel._init_handles()`初始化kernel的CUDA句柄。最终计算`num_programs`（SM数量×线程占用率）并保证安全运行kernel。
+
+![V100上softmax的表现](img/2.png)
