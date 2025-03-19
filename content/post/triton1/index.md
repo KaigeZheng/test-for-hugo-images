@@ -301,3 +301,9 @@ def softmax(x):
 在预编译阶段，`softmax_kernel.warmup(...)`预编译softmax kernel，用于获取寄存器使用情况、shared memory使用量、线程占用率，并通过`kernel._init_handles()`初始化kernel的CUDA句柄。最终计算`num_programs`（SM数量×线程占用率）并保证安全运行kernel。
 
 ![V100上softmax的表现](img/2.png)
+
+### Why Fused Softmax?
+
+读完[Fused Softmax Tutorial](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html)的代码后，我不太理解为什么这个kernel被成为融合Softmax（Fused Softmax），为什么将原本$\Theta(8MN+4M)$的IO开销缩减到了一次读写，为什么能够比PyTorch的实现更快（明明softmax的步骤是一样的）。
+
+除了用到了pipelining优化了计算流程，主要是在PyTorch传统softmax实现中，涉及多个kernel启动并在全局现存（global memory）之间频繁读写数据，导致了额外的内存访问开销和kernel启动开销（计算最大值，计算指数函数，行归一化，输出）。而用Triton写的Fused Softmax kernel编写了一个自定义CUDA kernel，在单个kernel内部完成了所有计算的步骤，也可以更好地利用shared memory和registers。
