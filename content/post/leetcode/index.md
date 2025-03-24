@@ -78,7 +78,58 @@ public:
 
 [128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/description/?envType=study-plan-v2&envId=top-100-liked)
 
-明天继续写——
+给定未排序的数组，找出数字连续的最长序列长度（不要求在原数组中连续）。
+
+使用`std::set`的自动排序可以轻松实现，虽然能过题，但是速度非常慢，只是样例没那么严格才能过的题，时间复杂度是$\Theta(nlogn)$。
+
+```cpp
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        if(!nums.size()) return 0;
+        set<int> s;
+        for(int x : nums) {
+            s.insert(x);
+        }
+        int cnt = 0;
+        int max_cnt = 1;
+        int last = -1;
+        for(int x : s) {
+            if(last + 1 == x) {
+                max_cnt = max(++cnt, max_cnt);
+            }else{
+                cnt = 1;
+            }
+            last = x;
+        }
+        return max_cnt;
+    }
+};
+```
+
+正解（哈希表）的构思很巧妙，首先遍历一遍数组去重，然后再遍历一遍哈希表。遍历时（假设当前元素为`x`），若`x - 1`在表中则跳过（因为这表示这个元素是最长序列的中间点或尾部，而非起点）；若`x - 1`不在表中，表明`x`只可能是起点，开始不断寻找`x + 1`是否在表内。
+
+```cpp
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> hash;
+        for(int num : nums) hash.insert(num);
+        int max_cnt = 0;
+        for(int num : hash) {
+            if(!hash.count(num - 1)) {
+                int cur = num;
+                int cnt = 1;
+                while(hash.count(cur + 1)) {
+                    ++cur; ++cnt;
+                }
+                max_cnt =max(cnt, max_cnt);
+            }
+        }
+        return max_cnt;
+    }
+};
+```
 
 ## 链表
 
