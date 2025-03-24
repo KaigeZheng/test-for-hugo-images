@@ -14,13 +14,81 @@ tags:
 weight: 10
 ---
 
-## 相交链表(哈希、双指针)
+[leetcode top 100](https://leetcode.cn/studyplan/top-100-liked/)
+
+## 哈希
+
+### 两数之和
 
 难度：Easy
 
-[160.相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/description/?envType=problem-list-v2&envId=J9S1zwux)(Easy):给两个单链表的头节点，找出并返回两个单链表相交的起始节点。（Note:不是值相等，而是内存空间相等）
+[1. 两数之和](https://leetcode.cn/problems/two-sum/description/?envType=study-plan-v2&envId=top-100-liked)
 
-### 哈希集合
+给定数组，求$x + y = target$的任意解。
+
+暴力枚举很容易实现，$\Theta(n^2)$的时间复杂度和$\Theta(1)$的空间复杂度。使用哈希表可以实现空间换时间，让时间和空间复杂度都为$\Theta(n)$。
+
+遍历元素时判断`target - x`是否存在哈希表，若不存在则将`(x, index)`存入哈希表中，只用遍历一遍数组。
+
+```cpp
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> hash;
+        for(int i = 0; i < nums.size(); ++i) {
+            auto it = hash.find(target - nums[i]);
+            if(it != hash.end()) return {it->second, i};
+            hash[nums[i]] = i;
+        }
+        return {};
+    }
+};
+```
+
+### 字母异位词分组
+
+难度：Medium
+
+[49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串数组，将*字母相同顺序不同的单词*组合再一起按任意顺序返回列表。
+
+第一个思路是字符串哈希，应该是可以过掉大部分样例的（但也有被卡单哈希模数和溢出的风险）。这里将每个单词排序后插入哈希表，实现方法也很简单。拷贝结果的方法值得参考。
+
+```cpp
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> hash;
+        for(string s : strs) {
+            string data = s;
+            sort(s.begin(), s.end());
+            hash[s].emplace_back(data);
+        }
+        vector<vector<string>> ans;
+        for(auto x : hash) ans.emplace_back(x.second);
+        return ans;
+    }
+};
+```
+
+### 最长连续序列
+
+难度：Medium
+
+[128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/description/?envType=study-plan-v2&envId=top-100-liked)
+
+明天继续写——
+
+## 链表
+
+### 相交链表(哈希、双指针)
+
+难度：Easy
+
+[160. 相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/description/?envType=problem-list-v2&envId=J9S1zwux)(Easy):给两个单链表的头节点，找出并返回两个单链表相交的起始节点。（Note:不是值相等，而是内存空间相等）
+
+#### 哈希集合
 
 时间复杂度：$\Theta (m+n)$
 
@@ -50,7 +118,7 @@ public:
 };
 ```
 
-### 双指针
+#### 双指针
 
 时间复杂度：$\Theta (m+n)$
 
@@ -73,15 +141,56 @@ public:
 };
 ```
 
-## 二叉树的最近公共祖先（LCA）
+### 反转链表（递归）
 
-难度：Medium
+难度：Easy
 
-[236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
+[206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/description/?envType=problem-list-v2&envId=J9S1zwux)
 
-还没太掌握递归的LCA，暂且放置。
+给一个单链表的头节点`head`，反转链表并返回反转后的链表。
 
-## 回文链表
+#### 递归
+
+只有至少有两个元素时才有必要反转（因此递归出口是`head && head->next`时需要反转，递归出口是`!head || !head->next`）。由于需要在链表尾部开始递归至链表头，因此先进入递归。简单画个图就明白反转的目的就是把当前节点的下一节点的next指向当前节点（`head->next->next = head`），同时把当前节点的下一节点的next节点置空（`head->next = nullptr`）以避免环。最后返回这个节点。
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(head == nullptr || head->next == nullptr) {
+            return head;
+        }
+        ListNode* newHead = reverseList(head->next);
+        head->next->next = head;
+        head->next = nullptr;
+        return newHead;
+    }
+};
+```
+
+#### 迭代
+
+迭代的思路更好理解，用双指针不断修改当前节点的next即可，用两个指针的目的是为了保护上一个节点。
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* pre = nullptr;
+        ListNode* cur = head;
+        while(cur) {
+            ListNode* next = cur->next;
+            cur->next = pre;
+            // 移动指针
+            pre = cur;
+            cur = next;
+        }
+        return pre;
+    }
+};
+```
+
+### 回文链表
 
 难度：Easy
 
@@ -89,39 +198,9 @@ public:
 
 不难，跳过。
 
-## 每日温度（栈）
+## 二叉树
 
-难度：Medium
-
-[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/description/?envType=problem-list-v2&envId=J9S1zwux)
-
-给定一个气温数组，求每个气温遇到下一个更高气温的距离。暴力解法是$\Theta(n^2)$，会TLE，明显会大量重复遍历，考虑一些“记忆化”手段。
-
-### 递减栈
-
-用一个stack（**存储索引**），如果栈空则直接入栈，若栈非空，且大于栈顶索引的元素时（说明找到了下一个更高的气温），就可以通过索引差计算距离并`stack.pop()`。
-
-只需要遍历一次数组，$\Theta(n)$。
-
-```cpp
-class Solution {
-public:
-    vector<int> dailyTemperatures(vector<int>& temperatures) {
-        vector<int> ans(temperatures.size(), 0);
-        stack<int> st;
-        for(int i = 0; i < temperatures.size(); ++i) {
-            while(!st.empty() && temperatures[i] > temperatures[st.top()]) {
-                auto t = st.top(); st.pop();
-                ans[t] = i - t;
-            }
-            st.push(i);
-        }
-        return ans;
-    }
-};
-```
-
-## 翻转二叉树（递归）
+### 翻转二叉树（递归）
 
 难度：Easy
 
@@ -151,13 +230,57 @@ public:
 };
 ```
 
-## 最大正方形（DP）
+### 二叉树的最近公共祖先（LCA）
+
+难度：Medium
+
+[236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+还没太掌握递归的LCA，暂且放置。
+
+## 栈
+
+### 每日温度（栈）
+
+难度：Medium
+
+[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+给定一个气温数组，求每个气温遇到下一个更高气温的距离。暴力解法是$\Theta(n^2)$，会TLE，明显会大量重复遍历，考虑一些“记忆化”手段。
+
+#### 递减栈
+
+用一个stack（**存储索引**），如果栈空则直接入栈，若栈非空，且大于栈顶索引的元素时（说明找到了下一个更高的气温），就可以通过索引差计算距离并`stack.pop()`。
+
+只需要遍历一次数组，$\Theta(n)$。
+
+```cpp
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        vector<int> ans(temperatures.size(), 0);
+        stack<int> st;
+        for(int i = 0; i < temperatures.size(); ++i) {
+            while(!st.empty() && temperatures[i] > temperatures[st.top()]) {
+                auto t = st.top(); st.pop();
+                ans[t] = i - t;
+            }
+            st.push(i);
+        }
+        return ans;
+    }
+};
+```
+
+## 动态规划
+
+### 最大正方形（DP）
 
 难度：Medium
 
 [221. 最大正方形](https://leetcode.cn/problems/maximal-square/description/?envType=problem-list-v2&envId=J9S1zwux)
 
-### DP
+#### DP
 
 显然暴力法会重复遍历很多元素，即使是dfs也是如此。
 
@@ -191,51 +314,97 @@ public:
 };
 ```
 
-## 反转链表（递归）
+## 堆
 
-难度：Easy
+### 数组中的第K个最大元素（排序）
 
-[206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/description/?envType=problem-list-v2&envId=J9S1zwux)
+难度：Medium
 
-给一个单链表的头节点`head`，反转链表并返回反转后的链表。
+[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
 
-### 递归
-
-只有至少有两个元素时才有必要反转（因此递归出口是`head && head->next`时需要反转，递归出口是`!head || !head->next`）。由于需要在链表尾部开始递归至链表头，因此先进入递归。简单画个图就明白反转的目的就是把当前节点的下一节点的next指向当前节点（`head->next->next = head`），同时把当前节点的下一节点的next节点置空（`head->next = nullptr`）以避免环。最后返回这个节点。
+顾名思义，用algorithm库的快排，两行代码秒了...
 
 ```cpp
 class Solution {
 public:
-    ListNode* reverseList(ListNode* head) {
-        if(head == nullptr || head->next == nullptr) {
-            return head;
-        }
-        ListNode* newHead = reverseList(head->next);
-        head->next->next = head;
-        head->next = nullptr;
-        return newHead;
+    int findKthLargest(vector<int>& nums, int k) {
+        sort(nums.begin(), nums.end());
+        return nums[nums.size() - k];
     }
 };
 ```
 
-### 迭代
-
-迭代的思路更好理解，用双指针不断修改当前节点的next即可，用两个指针的目的是为了保护上一个节点。
+手搓快排：
 
 ```cpp
-class Solution {
-public:
-    ListNode* reverseList(ListNode* head) {
-        ListNode* pre = nullptr;
-        ListNode* cur = head;
-        while(cur) {
-            ListNode* next = cur->next;
-            cur->next = pre;
-            // 移动指针
-            pre = cur;
-            cur = next;
+int quickselect(vector<int> &nums, int l, int r, int k) {
+    if (l == r) return nums[k];
+    int partition = nums[l], i = l - 1, j = r + 1;
+    while (i < j) {
+        do i++; while (nums[i] < partition);
+        do j--; while (nums[j] > partition);
+        if (i < j) swap(nums[i], nums[j]);
         }
-        return pre;
+        if (k <= j)return quickselect(nums, l, j, k);
+        else return quickselect(nums, j + 1, r, k);
+}
+```
+## 图论
+
+## 实现Trie（前缀树）（多叉树）
+
+难度：Medium
+
+[208. 实现Trie（前缀树）](https://leetcode.cn/problems/implement-trie-prefix-tree/?envType=problem-list-v2&envId=J9S1zwux)
+
+思路就是多叉树，每个节点映射到26个字母（26叉）。
+
+插入单词时，按照映射关系遍历，若为空则申请空间并将结尾标记为`isEnd=true`。
+
+search和startwith的区别仅仅在于返回`isEnd`还是`true`。
+
+```cpp
+class Trie {
+private:
+    bool isEnd;
+    Trie* next[26]; // 每个节点至多映射26个节点
+public:
+    Trie() {
+        isEnd = false;
+        memset(next, 0, sizeof(next));
+    }
+    
+    void insert(string word) {
+        Trie* node = this;
+        for(char c : word) {
+            if(node->next[c - 'a'] == NULL) {
+                node->next[c - 'a'] = new Trie();
+            }
+            node = node->next[c - 'a'];
+        }
+        node->isEnd = true;
+    }
+    
+    bool search(string word) {
+        Trie* node = this;
+        for(char c : word) {
+            node = node->next[c - 'a'];
+            if(node == NULL) {
+                return false;
+            }
+        }
+        return node->isEnd;
+    }
+    
+    bool startsWith(string prefix) {
+        Trie* node = this;
+        for(char c : prefix) {
+            node = node->next[c - 'a'];
+            if(node == NULL) {
+                return false;
+            }
+        }
+        return true;
     }
 };
 ```
