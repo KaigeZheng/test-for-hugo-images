@@ -4,7 +4,7 @@ description: 记录一下刷leetcode hot100的过程
 slug: leetcode
 date: 2025-03-23 14:54:00+0800
 math: true
-image: img/cover2.png
+image: img/cover.png
 categories:
     - 文档
     - 算法
@@ -127,6 +127,87 @@ public:
             }
         }
         return max_cnt;
+    }
+};
+```
+
+## 双指针
+
+### 移动零
+
+难度：Easy
+
+[283. 移动零](https://leetcode.cn/problems/move-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数字，将所有0移到末尾（要求原地操作）。
+
+使用双指针，左指针指向已处理好的序列尾部，右指针指向待处理序列头部。右指针不断移动，当指向非零元素时左右指针元素交换，且左指针右移。这样保证了左指针左边均非零，右指针到左指针之间均为0。
+
+### 盛最多水的容器
+
+难度：Medium
+
+[11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组height，求$(j - i) * min(height[i], height[j])$的最大值。
+
+$\Theta(n^2)$的暴力解法显然会TLE，这题的双指针有些难想到。
+
+首先设置分别从头开始遍历和从尾开始遍历的双指针，考虑以下结论：
+
++ 若向内移动短板，$min(height[i], height[j])$可能增大，因此$S$**可能**增大
+
++ 若向内移动长板，$min(height[i], height[j])$可能不变或变小，又$j-i$一定变小，因此$S$**一定**变小
+
+```cpp
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int ans = 0, i = 0, j = height.size() - 1;
+        while(i < j) {
+            int result = (j - i) * min(height[i], height[j]);
+            ans = max(ans, result);
+            if(height[i] > height[j]) --j;
+            else ++i;
+        }
+        return ans;
+    }
+};
+```
+
+## 三数之和
+
+难度：Medium
+
+[15. 三数之和](https://leetcode.cn/problems/3sum/description/?envType=study-plan-v2&envId=top-100-liked)
+
+与[两数之和（哈希）](https://leetcode.cn/problems/two-sum/)类似。题目主要分为两个部分，寻找满足条件的解和去重。找到解再通过哈希表去重有些麻烦，在遍历前排序，直接保证解$(a, b, c)$满足$a \leq b \leq c$即可方便地去重。
+
+暴力的时间复杂度为$\Theta(n^3)$（三重循环），可以改为一重循环+双指针，时间复杂度为$\Theta(n * n)=\ThetaO(n^3)$，在左指针元素递增时右指针元素递减。
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        vector<vector<int>> ans;
+        sort(nums.begin(), nums.end());
+        for(int i = 0; i < nums.size(); ++i) {
+            if(i && nums[i] == nums[i - 1]) continue;
+            int l = i + 1; 
+            int r = nums.size() - 1;
+            while(l < r) {
+                while(l > i + 1 && l < nums.size() && nums[l] == nums[l - 1]) ++l;
+                while(r < nums.size() - 1 && nums[r] == nums[r + 1]) --r;
+                if(l >= r) break;
+                if(nums[i] + nums[l] + nums[r] > 0) --r;
+                else if (nums[i] + nums[l] + nums[r] < 0) ++l;
+                else{
+                    ans.push_back({nums[i], nums[l], nums[r]});
+                    ++l; --r;
+                }
+            }
+        }
+        return ans;
     }
 };
 ```
