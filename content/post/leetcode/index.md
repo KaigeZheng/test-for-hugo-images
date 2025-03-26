@@ -175,7 +175,7 @@ public:
 };
 ```
 
-## 三数之和
+### 三数之和
 
 难度：Medium
 
@@ -206,6 +206,150 @@ public:
                     ++l; --r;
                 }
             }
+        }
+        return ans;
+    }
+};
+```
+
+### 接雨水
+
+难度：Hard
+
+[42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组表示每个宽度为1的柱子的高度图，计算按此排列的柱子下雨后能接多少雨水。
+
+对于下标$i$，能接的水等于下表$i$两边的最大高度的最小值减去$height[i]$。暴力法就是对于每个$i$都分别向左和向右遍历最大高度，时间复杂度是$\Theta(n^3)$。
+
+#### 构造动态规划
+
+使用动态规划，可以在$\Theta(n)$的时间内预处理得到每个位置两边的最大高度。维护两个长度为$n$的数组$leftMax$和$rightMax$，分别表示$i$及左边的最大值和$i$及右边的最大值。
+
++ $leftMax[i] = max(leftMax[i - 1], height[i])$(正向遍历)
+
++ $rightMax[i] = max(rightMax[i + 1], height[i])$(逆向遍历)
+
+于是下标$i$处能接的雨水量等于$min(leftMax[i], rightMax[i]) - height[i]$。
+
+```cpp
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int n = height.size();
+        vector<int> leftMax, rightMax;
+        leftMax.resize(n);
+        rightMax.resize(n);
+        /* 预处理:维护leftMax和rightMax */
+        leftMax[0] = height[0];
+        for(int i = 1; i < n; ++i) {
+            leftMax[i] = max(leftMax[i - 1], height[i]);
+        }
+        rightMax[n - 1] = height[n - 1];
+        for(int i = n - 2; i >= 0; --i) {
+            rightMax[i] = max(rightMax[i + 1], height[i]);
+        }
+        /* DP */
+        int ans = 0;
+        for(int i = 0; i < n; ++i) {
+            ans += min(leftMax[i], rightMax[i]) - height[i];
+        }
+        return ans;
+    }
+};
+```
+
+#### 双指针优化
+
+使用双指针就不需要维护数组$leftMax$和$rightMax$了，可以将空间复杂度从$\Theta(n)$降低到$\Theta(1)$，但是很难想。
+
+维护两个指针$left$和$right$，以及两个变量$leftMax$和$rightMax$，$left$向右移动，$right$向左移动。
+
++ 使用$height[left]$和$height[right]$的值更新$leftMax$和$rightMax$
+
++ 如果$height[left] \lt height[right]$，则必有$leftMax \lt rightMax$，此时$left$处能接的雨水量等于$leftMax - height[left]$，$left$右移
+
++ $right$的遍历基本同上，直到双指针相遇结束
+
+## 滑动窗口
+
+涉及到**子串**（连续非空字符序列，并非子序列），就可以考虑一下滑动窗口了。
+
+### 无重复字符的最长子串
+
+难度：Medium
+
+[3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个字符串，找出不含重复字符的额最长**子串**长度。
+
+有点类似双指针，滑动窗口也需要$left$和$right$控制滑动窗口左右边界
+
++ 当$right + 1$元素存在且不重复时，向右扩大窗口
+
++ 不满足扩大窗口条件时，向右缩小窗口并将窗口外元素排除出哈希集合
+
+```cpp
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        unordered_set<char> hash;
+        int ans = 0, right = -1;
+        for(int left = 0; left < s.size(); ++left) {
+            /* 移动左边界直到子串不重复 */
+            if(left != 0) hash.erase(s[left - 1]);
+            /* 右边界存在且不重复时扩大窗口 */
+            while(right + 1 < s.size() && !hash.count(s[right + 1])) {
+                hash.insert(s[right + 1]);
+                ++right;
+            }
+            ans = max(ans, right - left + 1);
+        }
+        return ans;
+    }
+};
+```
+
+### 找到字符串中所有字母异位词
+
+难度：Medium
+
+[438. 找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定两个字符串`s`和`p`，找到`s`中所有`p`的异位词的**子串**，返回这些**子串**的起始索引。
+
+写了段又臭又长的代码，但反正思路是对的。这个滑动窗口比上一个简单，因为只要开始滑动，$right$和$left$是同时递增的。
+
+```cpp
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        vector<int> ans;
+        if(s.size() < p.size()) return ans;
+        vector<int> hash;
+        vector<int> hash_table(26, 0);
+        vector<int> hash_table2(26, 0);
+        for(int i = 0; i < p.size(); ++i) {
+            ++hash_table[p[i] - 'a'];
+        }
+        int right = 0;
+        for(int left = 0; left < s.size() - p.size() + 1; ++left) {
+            if(left != 0) {
+                --hash_table2[hash[0]];
+                hash.erase(hash.begin());
+            }
+            while(right - left < p.size() && right < s.size()) {
+                hash.emplace_back(s[right] - 'a');
+                ++hash_table2[s[right++] - 'a'];
+            }
+            bool ok = true;
+            for(int i = 0; i < 26; ++i) {
+                if(hash_table2[i] != hash_table[i]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if(ok) ans.emplace_back(left);  
         }
         return ans;
     }
