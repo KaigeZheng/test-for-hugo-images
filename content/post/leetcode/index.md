@@ -835,7 +835,50 @@ public:
 
 [994. 腐烂的橘子](https://leetcode.cn/problems/rotting-oranges/?envType=study-plan-v2&envId=top-100-liked)
 
+给定含橘子、烂橘子和空的网格，求多少时间单位后全部腐烂。
 
+因为烂橘子的腐烂是向外扩散的，因此必须用BFS（实际上是**多源**BFS）。由于题目的特殊性，可以不使用队列来BFS（因为下一次扩散的一定是上一次被扩散的，可以直接用新的队列存储，直接用`move`替换）。
+
+题解代码写得太精致了，得学习一下。
+
+```cpp
+class Solution {
+    int DIRECTIONS[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+public:
+    int orangesRotting(vector<vector<int>>& grid) {
+        int n = grid.size(), m = grid[0].size();
+        int fresh = 0;
+        vector<pair<int, int>> q;
+        for(int i = 0; i < n; ++i) {
+            for(int j = 0; j < m; ++j) {
+                if(grid[i][j] == 1) {
+                    ++fresh;
+                } else if(grid[i][j] == 2) {
+                    q.emplace_back(i, j);
+                }
+            }
+        }
+        int ans = 0;
+        /* BFS */
+        while(fresh && !q.empty()) {
+            ++ans; // 经过一分钟
+            vector<pair<int, int>> next;
+            for(auto& [x, y] : q) {
+                for(auto d : DIRECTIONS) {
+                    int i = x + d[0], j = y + d[1];
+                    if(0 <= i && i < n && 0 <= j && j < m && grid[i][j] == 1) {
+                        --fresh;
+                        grid[i][j] = 2;
+                        next.emplace_back(i, j);
+                    }
+                }
+            }
+            q = move(next); // 优化: 下一次出发点一定是刚腐烂的
+        }
+        return fresh ? -1 : ans;
+    }
+};
+```
 
 ### 实现Trie（前缀树）（多叉树）
 
