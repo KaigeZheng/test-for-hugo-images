@@ -356,6 +356,126 @@ public:
 };
 ```
 
+## 子串
+
+### 和为K的子数组
+
+难度：Medium
+
+[560. 和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组和一个整数$k$，返回该数组中和为$k$的子数组的个数。
+
+写了一个非常之蠢的$\Theta(n^2)$的前缀和（这和暴力有什么区别啊喂），竟然能AC。正解需要前缀和+哈希表优化。
+
+定义$s[i + 1]$为$[0..i]$里所有数的和，则$s[i]$可以由$s[i - 1]$递推而来，即$s[i] = s[i - 1] + nums[i - 1]$。
+
+设$i \lt j$，如果$nums[i]$到$nums[j-1]$的元素和等于$k$，用前缀和表示就是$s[j] - s[i] == k$，移项得$s[i]==s[j]-k$。
+
+即，我们需要计算有多少个$s[i]$满足$i \lt j$且$s[i] == s[j] - k$。既要求$s[i]$的个数又要求$s[j]$的个数，那么用哈希表优化。（已知$s[j]$和$k$，统计$s[0]$到$s[j-1]$长有多少个数等于$s[j] - k$）
+
+这个做法挺难理解的。
+
+```cpp
+class Solution {
+public:
+    int subarraySum(vector<int>& nums, int k) {
+        int n = nums.size();
+        vector<int> s(n + 1);
+        /* 维护前缀和数组 */
+        s[0] = 0;
+        for(int i = 0; i < n; ++i) {
+            s[i + 1] = s[i] + nums[i];
+        }
+        int ans = 0;
+        unordered_map<int, int> hash;
+        for(int x : s) {
+            /* 对于每一个j(右端), 寻找s[?] - k的个数, O(1) */
+            ans += hash.contains(x - k) ? hash[x - k] : 0;
+            ++hash[x];
+        }
+        return ans;
+    }
+};
+```
+
+### 滑动窗口最大值
+
+难度：Hard
+
+[239. 滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组和一个大小为k的滑动窗口（从左往右移动，每次移动一位），只能看到滑动窗口内的k个数字，返回滑动窗口中的最大值。
+
+#### 优先队列（大根堆）
+
+优先队列中的元素数量不一定等于滑动窗口大小（因为堆顶元素是最大值，但这个最大值不一定在滑动窗口中）。初始先将$k$个元素放入大根堆中。每次向右移动窗口就可以放一个心得元素到大根堆中，然后判断堆顶元素下标是否在滑动窗口范围内。
+
+将一个元素放入优先队列的时间复杂度为$\Theta(log n)$，因此总体时间复杂度为$\Theta(nlogn)$。
+
+```cpp
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        int n  = nums.size();
+        priority_queue<pair<int, int>> q; // 大顶堆
+        for(int i = 0; i < k; ++i) {
+            q.emplace(nums[i], i);
+        }
+        vector<int> ans = {q.top().first};
+        for(int i = k; i < n; ++i) {
+            q.emplace(nums[i], i);
+            while(q.top().second <= i - k) {
+                q.pop();
+            }
+            ans.emplace_back(q.top().first);
+        }
+        return ans;
+    }
+};
+```
+
+#### 双向队列（大根堆）
+
+使用`deque`模拟滑动窗口（当然`deque`内的元素数量不一定等于滑动窗口大小），满足队首存储当前窗口的最大值，依据滑动窗口下标决定是否要弹出。由于不需要自动排序，时间复杂度可以优化为$\Theta(n)$
+
+```cpp
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        int n = nums.size();
+        deque<int> dq;
+        vector<int> ans(n - k + 1);
+        for(int i = 0; i < k; ++i) {
+            /* 如果插入的元素更大，就可以把前面的元素去掉了 -> 队首是最大值*/
+            while(!dq.empty() && dq.back() < nums[i])
+                dq.pop_back();
+            dq.push_back(nums[i]);
+        }
+        ans[0] = dq.front();
+        for(int i = k; i < n; ++i) {
+            if(dq.front() == nums[i - k])
+                dq.pop_front();
+            while(!dq.empty() && dq.back() < nums[i])
+                dq.pop_back();
+            dq.push_back(nums[i]);
+            ans[i - k + 1] = dq.front();
+        }
+        return ans;
+    }
+};
+```
+
+## 普通数组
+
+### 最大子数组和
+
+难度：Medium
+
+[53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/?envType=study-plan-v2&envId=top-100-liked)
+
+
+
 ## 链表
 
 ### 相交链表(哈希、双指针)
@@ -475,6 +595,48 @@ public:
 不难，跳过。
 
 ## 二叉树
+
+### 二叉树的中序遍历
+
+难度：Easy
+
+[94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/description/?envType=study-plan-v2&envId=top-100-liked)
+
+#### 递归
+
+```cpp
+class Solution {
+public:
+    void inorder(TreeNode* root, vector<int>& ans) {
+        if(!root) {
+            return;
+        }
+        inorder(root->left, ans);
+        ans.emplace_back(root->val);
+        inorder(root->right, ans);
+    }
+
+    vector<int> inorderTraversal(TreeNode* root) {
+        vector<int> ans;
+        inorder(root, ans);
+        return ans;
+    }
+};
+```
+
+#### 迭代
+
+和递归是等价的，用`stack`模拟函数栈
+
+### 二叉树的最大深度
+
+难度：Easy
+
+[104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树返回最大深度。
+
+
 
 ### 翻转二叉树（递归）
 
@@ -627,7 +789,55 @@ int quickselect(vector<int> &nums, int l, int r, int k) {
 ```
 ## 图论
 
-## 实现Trie（前缀树）（多叉树）
+### 岛屿数量
+
+难度：Medium
+
+[200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定'0'和'1'组成的二维网格，求成片的'1'的数量。
+
+dfs过题代码如下，bfs、并查集也可以写。
+
+```cpp
+class Solution {
+public:
+    bool visited[305][305];
+    bool dfs(vector<vector<char>>& grid, int x, int y) {
+        if(grid[x][y] == '0' || visited[x][y]) return false;
+        visited[x][y] = true;
+        if(x - 1 >= 0)              dfs(grid, x - 1, y);
+        if(x + 1 < grid.size())     dfs(grid, x + 1, y);
+        if(y - 1 >= 0)              dfs(grid, x, y - 1);
+        if(y + 1 < grid[0].size())  dfs(grid, x, y + 1);
+        return true;
+    }
+    int numIslands(vector<vector<char>>& grid) {
+        for(int i = 0; i < grid.size(); ++i) {
+            for(int j = 0; j < grid[0].size(); ++j) {
+                visited[i][j] = false;
+            }
+        }
+        int ans = 0;
+        for(int i = 0; i < grid.size(); ++i) {
+            for(int j = 0; j < grid[0].size(); ++j) {
+                if(dfs(grid, i, j)) ++ans;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+### 腐烂的橘子
+
+难度：Medium
+
+[994. 腐烂的橘子](https://leetcode.cn/problems/rotting-oranges/?envType=study-plan-v2&envId=top-100-liked)
+
+
+
+### 实现Trie（前缀树）（多叉树）
 
 难度：Medium
 
