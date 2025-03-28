@@ -636,7 +636,17 @@ public:
 
 给定二叉树返回最大深度。
 
+递归，非常简单，秒了。
 
+```cpp
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(root == nullptr) return 0;
+        else return max(maxDepth(root->left), maxDepth(root->right)) + 1;
+    }
+};
+```
 
 ### 翻转二叉树（递归）
 
@@ -667,6 +677,37 @@ public:
     }
 };
 ```
+
+### 对称二叉树
+
+难度：Easy
+
+[101. 对称二叉树](https://leetcode.cn/problems/symmetric-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树的根节点，检查是否轴对称。
+
+#### 递归
+
+想了一会没想出来，这个递归的构造有点巧妙。开局直接让左右子树进去递归没问题，如何在后续检查对称呢？答案是之后分别把`(leftTree->right, rightTree->left)`和`(leftTree->right, rightTree->left)`丢进去递归。
+
+```cpp
+class Solution {
+    bool check(TreeNode* p, TreeNode* q) {
+        if(p == nullptr || q == nullptr) {
+            return p == q;
+        }
+        return p->val == q->val && check(p->left, q->right) && check(p->right, q->right);
+    }
+public:
+    bool isSymmetric(TreeNode* root) {
+        return check(root->left, root->right);
+    }
+};
+```
+
+#### BFS（层次遍历）
+
+TODO：明天再写。
 
 ### 二叉树的最近公共祖先（LCA）
 
