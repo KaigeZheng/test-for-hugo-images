@@ -696,7 +696,7 @@ class Solution {
         if(p == nullptr || q == nullptr) {
             return p == q;
         }
-        return p->val == q->val && check(p->left, q->right) && check(p->right, q->right);
+        return p->val == q->val && check(p->left, q->right) && check(p->right, q->left);
     }
 public:
     bool isSymmetric(TreeNode* root) {
@@ -705,9 +705,61 @@ public:
 };
 ```
 
-#### BFS（层次遍历）
+#### 迭代
 
-TODO：明天再写。
+递归改迭代常引用队列，初始化时**将根节点入队两次**，每次提取两个节点比较是否相等，同时将左右子节点按相反顺序入队。
+
+```cpp
+class Solution {
+    bool check(TreeNode *l, TreeNode *r) {
+        queue<TreeNode*>q;
+        q.push(l); q.push(r);
+        while(!q.empty()) {
+            l = q.front(); q.pop();
+            r = q.front(); q.pop();
+            if(!l && !r) continue;
+            if((!l || !r) || (l->val != r->val)) return false;
+            q.push(l->left);
+            q.push(r->right);
+
+            q.push(l->right);
+            q.push(r->left);
+        }
+        return true;
+    }
+public:
+    bool isSymmetric(TreeNode* root) {
+        return check(root, root);
+    }
+};
+```
+
+### 二叉树的直径
+
+难度：Easy
+
+[543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树，求任意两节点之间最长路径的长度。递归注意返回`max(L, R) + 1`。
+
+```cpp
+class Solution {
+    int ans;
+    int check(TreeNode* root) {
+        if(!root) return 0;
+        int L = check(root->left);
+        int R = check(root->right);
+        ans = max(ans, L + R + 1);
+        return max(L, R) + 1;
+    }
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        ans = 0;
+        check(root);
+        return ans - 1;
+    }
+};
+```
 
 ### 二叉树的最近公共祖先（LCA）
 
@@ -975,6 +1027,142 @@ public:
             }
         }
         return true;
+    }
+};
+```
+
+## 动态规划
+
+### 爬楼梯
+
+难度：Easy
+
+[70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/description/?envType=study-plan-v2&envId=top-100-liked)
+
+入门板子题。
+
+```cpp
+class Solution {
+public:
+    int climbStairs(int n) {
+        int a[50];
+        a[1] = 1;
+        a[2] = 2;
+        for(int i = 3; i <= n; ++i) {
+            a[i] = a[i - 1] + a[i - 2];
+        }
+        return a[n];
+    }
+};
+```
+
+### 杨辉三角
+
+难度：Easy
+
+[118. 杨辉三角](https://leetcode.cn/problems/pascals-triangle/description/?envType=study-plan-v2&envId=top-100-liked)
+
+杨辉三角，把样例写成左对齐就很容易发现规律：
+
+```text
+[1]
+[1, 1]
+[1, 2, 1]
+[1, 3, 3, 1]
+[1, 4, 6, 4, 1]
+```
+
+即状态转移公式$ans[i][j] = ans[i - 1][j - 1] + ans[i - 1][j]$
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> generate(int numRows) {
+        vector<vector<int>> ans(numRows);
+        for(int i = 0; i < numRows; ++i) {
+            ans[i].resize(i + 1, 1);
+            for(int j = 1; j < i; ++j) {
+                ans[i][j] = ans[i - 1][j - 1] + ans[i - 1][j];
+            }
+        }
+        return ans;
+    }
+};
+```
+
+### 打家劫舍
+
+难度：Medium
+
+[208. 打家劫舍](https://leetcode.cn/problems/house-robber/?envType=study-plan-v2&envId=top-100-liked)
+
+偷n个房子，但是不能偷相邻的，求最高金额。
+
+dp解题步骤：
+
+1. 定义子问题
+
+可以将问题规模缩小，“从前$k$个房子中偷到的最大金额”，表示为$f(k)$。
+
+2. 子问题的递推关系（最优子结构）
+
+$f(k)$可以由$f(k-1)$和$f(k-2)$递推而来，偷$k$个房子有两种方法：
+
++ 在前$k-1$个房子得到了最大值，那么第$k$个房子不偷
+
++ 偷前$k-2$个房子和第$k$个房子得到了最大值
+
+得到递推关系——$dp[k] = max(dp[k - 1], dp[k - 2] + nums[k])$。这个情况覆盖了可能让$f(k)$达到最大值的所有情况。
+
+3. 确定dp数组的计算顺序
+
+4. 空间优化（optional）
+
+计算$f(k)$时只用到了$f(k-1)$和$f(k-2)$，那么不需要用一维数组存储，用两个变量即可。
+
+```cpp
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        if(!nums.size()) return 0;
+        vector<int> dp(nums.size() + 1, 0);
+        dp[0] = 0;
+        dp[1] = nums[0];
+        for(int k = 2; k <= nums.size(); ++k) {
+            dp[k] = max(dp[k - 1], nums[k - 1] + dp[k - 2]);
+        }
+        return dp[nums.size()];
+    }
+};
+```
+
+## 多维动态规划
+
+### 不同路径
+
+难度：Medium
+
+[62. 不同路径](https://leetcode.cn/problems/unique-paths/description/?envType=study-plan-v2&envId=top-100-liked)
+
+从网格的左上移动到坐下共有多少条不同路径。
+
+dp板子题，秒了。可以优化为一维数组（完全背包）：计算$dp[1][1]$时，会使用到$dp[0][1]$和$dp[1][0]$，但是$dp[0][1]$之后就不用了，那就干脆直接把$dp[1][1]$记到$dp[0][1]$中。
+
+排列组合也能算，但还是算了。
+
+```cpp
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        int dp[105][105];
+        for(int i = 0; i < m; ++i) dp[i][0] = 1;
+        for(int i = 1; i < n; ++i) dp[0][i] = 1;
+        for(int i = 1; i < m; ++i) {
+            for(int j = 1; j < n; ++j) {
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+            }
+        }
+        return dp[m - 1][n - 1];
     }
 };
 ```
