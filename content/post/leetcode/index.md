@@ -1166,3 +1166,148 @@ public:
     }
 };
 ```
+
+### 完全平方数
+
+难度：Medium
+
+[279. 完全平方数](https://leetcode.cn/problems/perfect-squares/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数`n`，返回和为`n`的完全平方数的最少数量（如13=4+9）
+
+状态转移方程比较特别，用$f[i]$表示最少需要多少个数的平方和来表示$i$。枚举这些数（$[1, \sqrt(i)]$），假设当前枚举到$j$，那么还需要取若干数的平方，构成$i-j^2$。（其实就是cost=1的完全背包问题）
+
+$$f[i] = 1 + \Sigma^{\sqrt(i)}_{j=1}min(f[i-j^2])$$
+
+```cpp
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> f(n + 1);
+        for(int i = 1; i <= n; ++i) {
+            int temp = 0x3f3f3f;
+            for(int j = 1; j * j <= i; ++j) {
+                temp = min(temp, f[i - j * j]);
+            }
+            f[i] = temp + 1;
+        }
+        return f[n];
+    }
+};
+```
+
+### 零钱兑换
+
+难度：Medium
+
+[322. 零钱兑换](https://leetcode.cn/problems/coin-change/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数硬币数组（不限量），求凑出给定整数的最少个数。
+
+跟上一题（完全平方数）很像，用$f[i]$表示凑成$i$所需的最少个数，只不过状态转移量从$j^2$变成了$coins[j]$。
+
+```cpp
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        if(amount == 0) return 0;
+        vector<int> dp(amount + 1, 0x3f3f3f);
+        dp[0] = 0;
+        for(int i = 1; i <= amount; ++i) {
+            for(int j = 0; j < coins.size(); ++j) {
+                if(i - coins[j] >= 0) dp[i] = min(1 + dp[i - coins[j]], dp[i]);
+            }
+        }
+        return dp[amount] == 0x3f3f3f? -1 : dp[amount];
+    }
+};
+```
+
+## 技巧
+
+### 只出现一次的数字
+
+难度：Easy
+
+[136. 只出现一次的数字](https://leetcode.cn/problems/single-number/?envType=study-plan-v2&envId=top-100-liked)
+
+给定非空整数数组，除了某个元素只出现一次外，其余每个元素均出现两次，返回只出现一次的元素。（要求时间复杂度$\Theta(N)$，空间复杂度$\Theta(1)$）
+
+利用位运算的异或，对于任意整数有$x\oplus x = 0$。因此，最后留下的结果就是出现一次的数字。
+
+$$a\oplus a\oplus b\oplus b\oplus c=c$$
+
+```cpp
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int result = 0;
+        for(auto & x : nums) result ^= x;
+        return result;
+    }
+};
+```
+
+### 多数元素
+
+难度：Easy
+
+[169. 多数元素](https://leetcode.cn/problems/majority-element/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组，返回其中的多数元素（出现次数大于$\lfloor n\rfloor$）。
+
+很简单，排完序肯定在中间。题解里有各式奇奇怪怪的解法，属于是小题大做了。
+
+```cpp
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        sort(nums.begin(), nums.end());
+        return nums[nums.size() / 2];
+    }
+};
+```
+
+### 颜色分类
+
+难度：Medium
+
+[75. 颜色分类](https://leetcode.cn/problems/sort-colors/?envType=study-plan-v2&envId=top-100-liked)
+
+排序但不能`sort`。桶一下就好了。
+
+```cpp
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        vector<int> color(3);
+        for(int & x : nums) ++color[x];
+        for(int i = 0; i < color[0]; ++i) nums[i] = 0;
+        for(int i = color[0]; i < color[0] + color[1]; ++i) nums[i] = 1;
+        for(int i = color[0] + color[1]; i < color[0] + color[1] + color[2]; ++i) nums[i] = 2;
+    }
+};
+```
+
+### 下一个排列
+
+难度：Medium
+
+[31. 下一个排列](https://leetcode.cn/problems/next-permutation/description/?envType=study-plan-v2&envId=top-100-liked)
+
+将数组原地修改到下一个排列，用STL可秒。字节一面题，还是了解一下正攻解法吧。
+
++ STL：
+
+```cpp
+class Solution {
+public:
+    void nextPermutation(vector<int>& nums) {
+        next_permutation(nums.begin(), nums.end());
+    }
+};
+```
+
++ 正攻：
+
+TODO
