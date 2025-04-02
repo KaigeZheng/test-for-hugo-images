@@ -761,6 +761,89 @@ public:
 };
 ```
 
+### 二叉树的层序遍历
+
+难度：Medium
+
+[102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/description/?envType=study-plan-v2&envId=top-100-liked)
+
+遇到**层次遍历**和**最短路径**应该想到BFS。将根节点入队后，每次将队列**当前所有元素清空**，并将所有左节点和右节点入队。时间复杂度和空间复杂度都为$\Theta(n)$。
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if(!root) return result;
+        queue<TreeNode*> q;
+        q.push(root);
+        while(!q.empty()) {
+            int n = q.size();
+            result.push_back(vector<int>());
+            for(int i = 0; i < n; ++i) {
+                TreeNode* node = q.front(); q.pop();
+                result.back().push_back(node->val);
+                if(node->left) q.push(node->left);
+                if(node->right) q.push(node->right);
+            }
+        }
+        return result;
+    }
+};
+```
+
+### 将有序数组转换为二叉搜索树
+
+难度：Easy
+
+[108. 将有序数组转换为二叉搜索树](https://leetcode.cn/problems/convert-sorted-array-to-binary-search-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定升序数组，转换为一棵平衡（左右子树高度相差<=1）二叉搜索树。
+
+递归解法如下。每次将中间节点作为根节点，然后将左升序区间和右升序区间再丢进去递归（直接写在申请`TreeNode`中，有点妙）。
+
+```cpp
+class Solution {
+    TreeNode* dfs(vector<int>& nums, int left, int right) {
+        if(left == right) return nullptr;
+        int m = left + (right - left) / 2;
+        return new TreeNode(nums[m], dfs(nums, left, m), dfs(nums, m + 1, right));
+    }
+public:
+    TreeNode* sortedArrayToBST(vector<int>& nums) {
+        return dfs(nums, 0, nums.size());
+    }
+};
+```
+
+### 验证二叉搜索树
+
+难度：Medium
+
+[98. 验证二叉搜索树](https://leetcode.cn/problems/validate-binary-search-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树，判断是否是合法的二叉搜索树（左子树只包含小于当前节点的数，右子树只包含大于当前节点的数）。
+
+递归，初始范围区间是$(-inf, +inf)$，当前值在区间内时，将左子树和左区间$(-inf, root->val)$，右子树和右区间$(root->val, +inf)$丢进去递归。
+
+（题目样例用`INT_MAX`恶心人...）
+
+```cpp
+class Solution {
+    bool check(TreeNode* root, long long lower, long long upper) {
+        if(root == nullptr) return true;
+        if(root->val <= lower || root->val >= upper) {
+            return false;
+        }
+        return check(root->left, lower, root->val) && check(root->right, root->val, upper);
+    }
+public:
+    bool isValidBST(TreeNode* root) {
+        return check(root, LONG_MIN, LONG_MAX);
+    }
+};
+```
+
 ### 二叉树的最近公共祖先（LCA）
 
 难度：Medium
@@ -1310,4 +1393,40 @@ public:
 
 + 正攻：
 
-TODO
+分为三步：
+
+1. 从右向左找第一个数字$x$满足右边有$\lt x$的数。
+
+2. 找$x$右边最小的大于$x$的数$y$（注意一个性质，$x$右边是单调递减的），交换$x$和$y$。
+
+3. 交换后，$y$右边是单调递减的，需要转成单调递增（`reverse`即可，不需要排序）
+
+```cpp
+class Solution {
+public:
+    void nextPermutation(vector<int>& nums) {
+        int n = nums.size();
+        // 从右向左找第一个小于右侧相邻数字的元素
+        int i = n - 2;
+        while (i >= 0 && nums[i] >= nums[i + 1]) --i;
+        // 如果没找到就跳过
+        if (i >= 0) {
+            // 从右向左找第一个
+            int j = n - 1;
+            while(nums[j] <= nums[i]) --j;
+            swap(nums[i], nums[j]);
+        }
+        // 反转nums[i + 1:]
+        reverse(nums.begin() + i + 1, nums.end());
+    }
+};
+```
+
+### 寻找重复数
+
+难度：Medium
+
+[287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定长度为$n+1$的数组，数字范围在$[1,n]$内，有一个重复的整数，返回这个重复的整数。不能修改数字且只用$\Theta(1)$的额外空间。
+
