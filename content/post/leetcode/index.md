@@ -844,6 +844,151 @@ public:
 };
 ```
 
+### 二叉搜索树中第K小的元素
+
+难度：Medium
+
+[230. 二叉搜索树中第K小的元素](https://leetcode.cn/problems/kth-smallest-element-in-a-bst/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉搜索树，返回第k小的元素。
+
+在二叉搜索树中，任意子节点都满足$left < root < right$，因此有一个重要性质：**BST的中序遍历为递增序列**。问题转化为求中序遍历的第k个节点。
+
+```cpp
+class Solution {
+    int ans, k;
+    void dfs(TreeNode* root) {
+        if(root == nullptr) return;
+        /* 中序遍历 */
+        dfs(root->left);
+        if(--k == 0) ans = root->val;
+        dfs(root->right);
+    }
+public:
+    int kthSmallest(TreeNode* root, int k) {
+        this->k = k;
+        dfs(root);
+        return ans;
+    }
+};
+```
+
+### 二叉树的右视图
+
+难度：Medium
+
+[199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树，返回从右侧看到的节点值。
+
+#### BFS
+
+解法和二叉树的层序遍历差不多，由于不知道二叉树的形状，因此是需要遍历每个节点的。每次迭代将所有节点出队（队首就是需要的右视图），并将所有出队节点的子节点放入队列（优先放入右节点，保证下次迭代出队时，队首节点是需要的右视图）。
+
+```cpp
+class Solution {
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        vector<int> ans;
+        queue<TreeNode*> q;
+        if(root) q.push(root);
+        while(!q.empty()) {
+            int n = q.size();
+            for(int i = 0; i < n; ++i) {
+                TreeNode* node = q.front();
+                if(i == 0) ans.emplace_back(node->val);
+                if(node->right) q.push(node->right);
+                if(node->left) q.push(node->left);
+                q.pop();
+            }
+        }
+        return ans;
+    }
+};
+```
+
+#### DFS
+
+补充一个间接的DFS解法：
+
+```cpp
+class Solution {
+    vector<int> ans;
+    void dfs(TreeNode* node, int u) {
+        if(u == ans.size()) ans.emplace_back(node->val);
+        if(node->right) dfs(node->right, u + 1);
+        if(node->left) dfs(node->left, u + 1);
+    }
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        if(root) dfs(root, 0);
+        return ans;
+    }
+};
+```
+
+### 二叉树展开为链表
+
+难度：Medium
+
+[114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树，按前序遍历展平为链表。
+
+前序遍历塞进队列，然后遍历一遍的队列。时间复杂度和空间复杂度都是$\Thata(n)$。
+
+```cpp
+class Solution {
+    queue<TreeNode*>q;
+    void preorder(TreeNode* node) {
+        if(node == nullptr) {
+            return;
+        }
+        q.push(node);
+        preorder(node->left);
+        preorder(node->right);
+    }
+public:
+    void flatten(TreeNode* root) {
+        if(root) preorder(root);
+        else return;
+        TreeNode* last = q.front();
+        q.pop();
+        while(!q.empty()) {
+            last->left = nullptr;
+            TreeNode* current = q.front();
+            q.pop();
+            last->right = current;
+            last = current;
+        }
+    }
+};
+```
+
+还有一种空间复杂度降为$\Theta(1)$的做法，对于当前节点，如果左节点非空，则在左子树找到最右的节点作为前驱节点，将右节点（右子树）赋这个节点的右节点（反正这个空间暂时用不到），并将当前节点的左节点赋给右节点，左节点置空。这个做法得思考一下。
+
+```cpp
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+        TreeNode *cur = root;
+        while(cur != nullptr) {
+            if(cur->left != nullptr) {
+                TreeNode* next = cur->left;
+                TreeNode* pre = next;
+                while(pre->right != nullptr) {
+                    pre = pre->right;
+                }
+                pre->right = cur->right;
+                cur->left = nullptr;
+                cur->right = next;
+            }
+            cur = cur->right;
+        }
+    }
+};
+```
+
 ### 二叉树的最近公共祖先（LCA）
 
 难度：Medium
