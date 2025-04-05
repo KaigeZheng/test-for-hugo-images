@@ -989,6 +989,14 @@ public:
 };
 ```
 
+### 从前序与中序遍历序列构造二叉树
+
+难度：Medium
+
+[105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树的前序遍历和中序遍历，构造二叉树并返回根节点。
+
 ### 二叉树的最近公共祖先（LCA）
 
 难度：Medium
