@@ -307,3 +307,88 @@ def softmax(x):
 读完[Fused Softmax Tutorial](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html)的代码后，我不太理解为什么这个kernel被成为融合Softmax（Fused Softmax），为什么将原本$\Theta(8MN+4M)$的IO开销缩减到了一次读写，为什么能够比PyTorch的实现更快（明明softmax的步骤是一样的）。
 
 除了用到了pipelining优化了计算流程，主要是在PyTorch传统softmax实现中，涉及多个kernel启动并在全局现存（global memory）之间频繁读写数据，导致了额外的内存访问开销和kernel启动开销（计算最大值，计算指数函数，行归一化，输出）。而用Triton写的Fused Softmax kernel编写了一个自定义CUDA kernel，在单个kernel内部完成了所有计算的步骤，也可以更好地利用shared memory和registers。
+
+## Matrix Multiplication
+
+### Blocked Matrix Multiplication
+
+对于一个以$(BLOCK\_SIZE\_M, BLOCK\_SIEZE\_K, BLOCK\_SIZE\_N)$为分块大小的，$(M, K)$和$(K, N)$相乘的分块矩阵乘法如下：
+
+```python
+# Do in parallel
+for m in range(0, M, BLOCK_SIZE_M):
+  # Do in parallel
+  for n in range(0, N, BLOCK_SIZE_N):
+    acc = zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=float32)
+    for k in range(0, K, BLOCK_SIZE_K):
+      a = A[m : m+BLOCK_SIZE_M, k : k+BLOCK_SIZE_K]
+      b = B[k : k+BLOCK_SIZE_K, n : n+BLOCK_SIZE_N]
+      acc += dot(a, b)
+    C[m : m+BLOCK_SIZE_M, n : n+BLOCK_SIZE_N] = acc
+```
+
+> 这里$C[...] = acc$是正确的，因为已经遍历完k维度了
+
+### Compute Kernel
+
+#### 多维指针
+
+对于行主序的二维张量$X$，$X[i, j]$的内存位置由$\&X[i, j] = X + i * stride\_xi + j * stride\_xj$给出，因此$A[m : m + BLOCK\_SIZE\_M, k : k + BLOCK\_SIZE\_K]$和$B[k : k + BLOCK\_SIZE\_K, n : n + BLOCK\_SIZE\_N]$的指针块可以用伪代码定义为：
+
+```python
+&A[m : m+BLOCK_SIZE_M, k:k+BLOCK_SIZE_K] = a_ptr + (m : m+BLOCK_SIZE_M)[:, None]*A.stride(0) + (k : k+BLOCK_SIZE_K)[None, :]*A.stride(1);  
+&B[k : k+BLOCK_SIZE_K, n:n+BLOCK_SIZE_N] = b_ptr + (k : k+BLOCK_SIZE_K)[:, None]*B.stride(0) + (n : n+BLOCK_SIZE_N)[None, :]*B.stride(1);
+```
+
+其中，`[:, None]`和`[None, :]`是用于扩展数组维度的操作，通常用于广播。（注意，`stride(x)`的单位是字节）
+
++ `[:, None]`表示在数组的第二个维度（列维度）上增加一个大小为1的维度，将形状为`(n,)`的数组变为`(n, 1)`
+
++ `[None, :]`表示在数组的第一个维度（行维度）上增加一个大小为1的维度，将形状为`(n,)`的数组变为`(1, n)`
+
+接下来计算offset：
+
+```python
+offs_am = (pid_m * BLOCK_SIZE_M + tl.arange(0, BLOCK_SIZE_M)) % M
+offs_bn = (pid_n * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)) % N
+offs_k = tl.arange(0, BLOCK_SIZE_K)
+a_ptrs = a_ptr + (offs_am[:, None]*stide_am + offs_k[None, :]*stride_ak)
+b_ptrs = b_ptr + (offs_k[:, None]*stride_bk + offs_bn[None, :]*stride_bn)
+```
+
+在内循环中更新：
+
+```python
+a_ptrs += BLOCK_SIZE_K * stride_ak
+b_ptrs += BLOCK_SIZE_K * stride_bk
+```
+
+### L2 Cache Optimization
+
+对于$N \times N$的矩阵（以$BLOCK\_SIZE\_N$为分块大小），可以通过以下代码将一维的`program_id`线程块索引映射到二维的块索引，从而确定当前program负责计算结果矩阵$C$的哪一块。
+
+```python
+pid = tl.program_id(axis=0)
+grid_n = tl.cdiv(N, BLOCK_SIZE_N)
+pid_m = pid // grid_n
+pid_n = pid % grid_n
+```
+
+每个程序实例计算$C$的一个$[BLOCK\_SIZE\_M, BLOCK\_SIZE\_N]$块，简单的行主序排序是行不通的。
+
+可以实现以下的分组（Grouping）优化，目的是为了优化内存访问模式：
+
+```python
+pid = tl.program_id(axis=0)
+num_pid_m = tl.cdiv(M, BLOCK_SIZE_M) # M轴program数量
+num_pid_n = tl.cdiv(N, BLOCK_SIZE_N) # N轴program数量
+num_pid_in_group = GROUP_SIZE_M * num_pid_n # 在每个GROUP_M中的program数量
+group_id = pid // num_pid_in_group # group id
+first_pid_m = group_id * GROUP_SIZE_M # 组内第一个program的行id
+group_size_m = min(num_pid_m - first_pid_m, GROUP_SIZE_M) # 最后一组偏小
+# 在group内, program按**列主序**排序
+pid_m = first_pid_m + ((pid % num_pid_in_group) % group_size_m) # 启动网格中的行id
+pid_n = (pid % num_pid_in_group) // group_size_m # 启动网格中的列id
+```
+
+（Triton Matmul的结果还有点问题，日后再更新）
