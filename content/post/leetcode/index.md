@@ -997,6 +997,107 @@ public:
 
 给定二叉树的前序遍历和中序遍历，构造二叉树并返回根节点。
 
+不会写，只能看题解了，给出一种递归解法：
+
+前序遍历（$root, [left],[right]$）和中序遍历（$[left],root,[right]$）的长度是一致的。首先遍历一遍中序遍历，将$(inorder[i], i)$塞进哈希表，来快速找某个元素在中序遍历的位置（$\Theta(1)$），用来找根节点。
+
+在递归中，前序遍历的第一个节点就是当前根节点，然后在中序遍历中寻找，就能分割左右子树了。当要递归构造左子树时，中序遍历的范围是清晰的（当前根节点左边的区间，即$[in_l, in_root - 1]$）；前序遍历的范围则是第一个节点（当前根节点）后的左子树个数的区间。
+
+```cpp
+class Solution {
+    unordered_map<int, int> index;
+public:
+    TreeNode* build(const vector<int>& preorder, const vector<int>& inorder, int pre_l, int pre_r, int in_l, int in_r) {
+        if(pre_l > pre_r) {
+            return nullptr;
+        }
+        /* 前序遍历的第一个节点是根节点 */
+        int pre_root = pre_l;
+        /* 在中序遍历中定位根节点 */
+        int in_root = index[preorder[pre_root]];
+
+        TreeNode* root = new TreeNode(preorder[pre_root]);
+        /* (通过中序遍历)左子树的子节点数目 */
+        int size_l = in_root - in_l;
+        /* 递归构造左子树 */
+        root->left = build(preorder, inorder, pre_l + 1, pre_l + size_l, in_l, in_root - 1);
+        /* 递归构造右子树 */
+        root->right = build(preorder, inorder, pre_l + size_l + 1, pre_r, in_root + 1, in_r);
+        return root;
+    }
+
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        int n = preorder.size();
+        for(int i = 0; i < n; ++i) {
+            index[inorder[i]] = i;
+        }
+        return build(preorder, inorder, 0, n - 1, 0, n - 1);
+    }
+};
+```
+
+### 路径总和III
+
+难度：Medium
+
+[437. 路径总和III](https://leetcode.cn/problems/path-sum-iii/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树和整数$targetSum$，求该二叉树里节点值之和等于$targetSum$的路径的数目。
+
+#### DFS
+
+每次递归时都传$targetSum - node->val$，可以少传一个$sum$变量。要记得开`long long`，不然过不去阴间测例。这种解法遍历了每个节点出发到叶子节点，复杂度是$\Theta(n^2)$，有大量的重复遍历。
+
+```cpp
+class Solution {
+    int dfs(TreeNode* node, long long targetSum) {
+        if(!node) return 0;
+        int result = 0;
+        if(node->val == targetSum) ++result;
+        result += dfs(node->left, targetSum - node->val);
+        result += dfs(node->right, targetSum - node->val);
+        return result;
+    }
+public:
+    int pathSum(TreeNode* root, int targetSum) {
+        if(!root) return 0;
+        int ans = dfs(root, targetSum);
+        ans += pathSum(root->left, targetSum);
+        ans += pathSum(root->right, targetSum);
+        return ans;
+    }
+};
+```
+
+#### 前缀和优化
+
+求路径上的和是否等于目标值，很容易想到前缀和。问题转化为将二叉树构造为前缀和。
+
+从根节点$root$开始遍历到$node$，此时的路径是$root->p_1->p_2->...->node$，而$sum$就是前缀和，在遍历的过程中，将前缀和记录到前缀和数组中($++prefix[sum]$)。**注意退出节点时还需要状态回溯($--prefix[sum]$)。
+
+```cpp
+class Solution {
+    unordered_map<long long, int> prefix;
+
+    int dfs(TreeNode *node, long long sum, int targetSum) {
+        if(!node) return 0;
+        int result = 0;
+        sum += node->val;
+        if(prefix.count(sum - targetSum)) result = prefix[sum - targetSum];
+        ++prefix[sum];
+        result += dfs(node->left, sum, targetSum);
+        result += dfs(node->right, sum, targetSum);
+        --prefix[sum];
+        return result;
+    }
+public:
+    int pathSum(TreeNode* root, int targetSum) {
+        prefix[0] = 1;
+        return dfs(root, 0, targetSum);
+    }
+};
+```
+
 ### 二叉树的最近公共祖先（LCA）
 
 难度：Medium
@@ -1004,6 +1105,37 @@ public:
 [236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
 
 还没太掌握递归的LCA，暂且放置。
+
+### 二叉树中的最大路径和
+
+难度：Hard
+
+[124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+给定二叉树，返回最大路径和。
+
+```cpp
+class Solution {
+    int ans = INT_MIN;
+    int solve(TreeNode* node) {
+        if(!node) return 0;
+        /* 递归计算左右子节点的最大贡献值 */
+        /* 贡献值>0时才选取 */
+        int l = max(solve(node->left), 0);
+        int r = max(solve(node->right), 0);
+        /* 节点的最大路径和取决于该节点值与左右子节点的最大贡献值 */
+        int sum = node->val + l + r;
+        ans = max(ans, sum);
+        /* 返回节点的最大贡献值 */
+        return node->val + max(l, r);
+    }
+public:
+    int maxPathSum(TreeNode* root) {
+        solve(root);
+        return ans;
+    }
+};
+```
 
 ## 栈
 
