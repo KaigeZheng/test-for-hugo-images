@@ -1341,6 +1341,53 @@ public:
 };
 ```
 
+### 课程表
+
+难度：Medium
+
+[207. 课程表](https://leetcode.cn/problems/course-schedule/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给出必修课程$0~n-1$和先修课程$pre[i] = [a_i, b_i]$（$a_i$的先决条件是$b_i$），判断是否可能完成所有课程的学习。
+
+少见的**拓扑排序**（topo sort），很重要的题。给定$n$，一个先决条件表，判断是否能完成所有课程。
+
+先用先决条件表构造入边表和有向图。使用BFS，将没有先决条件的课程加入队列。对于队列中的每个课程，可以在有向图中遍历，将先决条件消除，并将没有先决条件的课程继续加入队列直到空。
+
+```cpp
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        vector<vector<int>> g(numCourses);
+        vector<int> indegree(numCourses);
+        /* 遍历先决条件表，构造“入边”表 */
+        for(int i = 0; i < prerequisites.size(); ++i) {
+            int x = prerequisites[i][0], y = prerequisites[i][1];
+            ++indegree[x];  // x有?个先决条件
+            g[y].push_back(x); 
+        }
+        queue<int> q;
+        for(int i = 0; i < numCourses; ++i) {
+            if(indegree[i] == 0) q.push(i); // 没有先决条件的课程(没有先修课程的课程)
+        }
+        /* BFS */
+        while(!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for(int v : g[u]) {
+                --indegree[v];
+                if(indegree[v] == 0) {
+                    q.push(v);
+                }
+            }
+        }
+        for(int x : indegree) {
+            if(x != 0) return false;
+        }
+        return true;
+    }
+};
+```
+
 ### 实现Trie（前缀树）（多叉树）
 
 难度：Medium
