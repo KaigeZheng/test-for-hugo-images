@@ -1137,117 +1137,6 @@ public:
 };
 ```
 
-## 栈
-
-### 每日温度（栈）
-
-难度：Medium
-
-[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/description/?envType=problem-list-v2&envId=J9S1zwux)
-
-给定一个气温数组，求每个气温遇到下一个更高气温的距离。暴力解法是$\Theta(n^2)$，会TLE，明显会大量重复遍历，考虑一些“记忆化”手段。
-
-#### 递减栈
-
-用一个stack（**存储索引**），如果栈空则直接入栈，若栈非空，且大于栈顶索引的元素时（说明找到了下一个更高的气温），就可以通过索引差计算距离并`stack.pop()`。
-
-只需要遍历一次数组，$\Theta(n)$。
-
-```cpp
-class Solution {
-public:
-    vector<int> dailyTemperatures(vector<int>& temperatures) {
-        vector<int> ans(temperatures.size(), 0);
-        stack<int> st;
-        for(int i = 0; i < temperatures.size(); ++i) {
-            while(!st.empty() && temperatures[i] > temperatures[st.top()]) {
-                auto t = st.top(); st.pop();
-                ans[t] = i - t;
-            }
-            st.push(i);
-        }
-        return ans;
-    }
-};
-```
-
-## 动态规划
-
-### 最大正方形（DP）
-
-难度：Medium
-
-[221. 最大正方形](https://leetcode.cn/problems/maximal-square/description/?envType=problem-list-v2&envId=J9S1zwux)
-
-#### DP
-
-显然暴力法会重复遍历很多元素，即使是dfs也是如此。
-
-以`dp(i, j)`表示以`(i, j)`为右下角且只包含`1`的正方形的**边长**最大值，接下来考虑转移方程。`matrix[i][j] == 0`时的转移方程显然是`dp[i][j] = 0`；`matrix[i][j] == 1`时且边界安全时，则`dp[i][j]`的值由左、上、左上元素的最小值决定，简单来说是`=min(左, 上, 左上)+1`。
-
-```cpp
-class Solution {
-public:
-    int maximalSquare(vector<vector<char>>& matrix) {
-        if(matrix.size() == 0 || matrix[0].size() == 0) return 0;
-        vector<vector<int>> dp;
-        dp.resize(matrix.size());
-        for(int i = 0; i < matrix.size(); ++i) {
-            dp[i].resize(matrix[0].size(), 0);
-        }
-        int ans = 0;
-        for(int i = 0; i < matrix.size(); ++i) {
-            for(int j = 0; j < matrix[0].size(); ++j) {
-                if(matrix[i][j] == '1') {
-                    if(i == 0 || j == 0) {
-                        dp[i][j] = 1;
-                    } else {
-                        dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
-                    }
-                }
-                ans = max(ans, dp[i][j]);
-            }
-        }
-        return ans * ans; // return square
-    }
-};
-```
-
-## 堆
-
-### 数组中的第K个最大元素（排序）
-
-难度：Medium
-
-[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
-
-顾名思义，用algorithm库的快排，两行代码秒了...
-
-```cpp
-class Solution {
-public:
-    int findKthLargest(vector<int>& nums, int k) {
-        sort(nums.begin(), nums.end());
-        return nums[nums.size() - k];
-    }
-};
-```
-
-手搓快排：
-
-```cpp
-int quickselect(vector<int> &nums, int l, int r, int k) {
-    if (l == r) return nums[k];
-    int partition = nums[l], i = l - 1, j = r + 1;
-    while (i < j) {
-        do i++; while (nums[i] < partition);
-        do j--; while (nums[j] > partition);
-        if (i < j) swap(nums[i], nums[j]);
-        }
-        if (k <= j)return quickselect(nums, l, j, k);
-        else return quickselect(nums, j + 1, r, k);
-}
-```
 ## 图论
 
 ### 岛屿数量
@@ -1444,6 +1333,182 @@ public:
         return true;
     }
 };
+```
+
+## 回溯
+
+### 全排列
+
+难度：Medium
+
+[46. 全排列](https://leetcode.cn/problems/permutations/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定不含重复数字的数组，按任意顺序返回其所有可能的全排列。
+
+邪门歪道之stl可秒，和[31. 下一个排列](https://leetcode.cn/problems/next-permutation/description/?envType=study-plan-v2&envId=top-100-liked)类似。
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> ans;
+        do{
+            vector<int> tmp;
+            for(int x : nums) {
+                tmp.push_back(x);
+            }
+            ans.push_back(tmp);
+        }while(next_permutation(nums.begin(), nums.end()));
+        return ans;
+    }
+};
+```
+
+但还是认真写回溯解法吧。可以将问题视为在长度为$n$的数组中填充数字，每个数字仅能使用一次。题解是优化后的解法，去掉了$vis$标记数组。当已经填充到第$n$个位置，那么$[0, n - 1]$是已填的集合，$[n, len - 1]$是待填的集合，将$nums[n]$和$nums[x],x \in [n, len - 1]$区间的数字交换可以达到同样的效果。
+
+```cpp
+class Solution {
+    void solve(vector<vector<int>>& ans, vector<int>& output, int n, int len) {
+        if(n == len) {
+            ans.emplace_back(output);
+            return;
+        }
+        for(int i = n; i < len; ++i) {
+            swap(output[i], output[n]);
+            solve(ans, output, n + 1, len);
+            swap(output[i], output[n]);
+        }
+    }
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        vector<vector<int>> ans;
+        solve(ans, nums, 0, nums.size());
+        return ans;
+    }
+};
+```
+
+### 子集
+
+难度：Medium
+
+[78. 子集](https://leetcode.cn/problems/subsets/?envType=study-plan-v2&envId=top-100-liked)
+
+给定不含重复数字的数组，返回不重复的所有子集。
+
+
+
+## 栈
+
+### 每日温度（栈）
+
+难度：Medium
+
+[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+给定一个气温数组，求每个气温遇到下一个更高气温的距离。暴力解法是$\Theta(n^2)$，会TLE，明显会大量重复遍历，考虑一些“记忆化”手段。
+
+#### 递减栈
+
+用一个stack（**存储索引**），如果栈空则直接入栈，若栈非空，且大于栈顶索引的元素时（说明找到了下一个更高的气温），就可以通过索引差计算距离并`stack.pop()`。
+
+只需要遍历一次数组，$\Theta(n)$。
+
+```cpp
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        vector<int> ans(temperatures.size(), 0);
+        stack<int> st;
+        for(int i = 0; i < temperatures.size(); ++i) {
+            while(!st.empty() && temperatures[i] > temperatures[st.top()]) {
+                auto t = st.top(); st.pop();
+                ans[t] = i - t;
+            }
+            st.push(i);
+        }
+        return ans;
+    }
+};
+```
+
+## 动态规划
+
+### 最大正方形（DP）
+
+难度：Medium
+
+[221. 最大正方形](https://leetcode.cn/problems/maximal-square/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+#### DP
+
+显然暴力法会重复遍历很多元素，即使是dfs也是如此。
+
+以`dp(i, j)`表示以`(i, j)`为右下角且只包含`1`的正方形的**边长**最大值，接下来考虑转移方程。`matrix[i][j] == 0`时的转移方程显然是`dp[i][j] = 0`；`matrix[i][j] == 1`时且边界安全时，则`dp[i][j]`的值由左、上、左上元素的最小值决定，简单来说是`=min(左, 上, 左上)+1`。
+
+```cpp
+class Solution {
+public:
+    int maximalSquare(vector<vector<char>>& matrix) {
+        if(matrix.size() == 0 || matrix[0].size() == 0) return 0;
+        vector<vector<int>> dp;
+        dp.resize(matrix.size());
+        for(int i = 0; i < matrix.size(); ++i) {
+            dp[i].resize(matrix[0].size(), 0);
+        }
+        int ans = 0;
+        for(int i = 0; i < matrix.size(); ++i) {
+            for(int j = 0; j < matrix[0].size(); ++j) {
+                if(matrix[i][j] == '1') {
+                    if(i == 0 || j == 0) {
+                        dp[i][j] = 1;
+                    } else {
+                        dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
+                    }
+                }
+                ans = max(ans, dp[i][j]);
+            }
+        }
+        return ans * ans; // return square
+    }
+};
+```
+
+## 堆
+
+### 数组中的第K个最大元素（排序）
+
+难度：Medium
+
+[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+顾名思义，用algorithm库的快排，两行代码秒了...
+
+```cpp
+class Solution {
+public:
+    int findKthLargest(vector<int>& nums, int k) {
+        sort(nums.begin(), nums.end());
+        return nums[nums.size() - k];
+    }
+};
+```
+
+手搓快排：
+
+```cpp
+int quickselect(vector<int> &nums, int l, int r, int k) {
+    if (l == r) return nums[k];
+    int partition = nums[l], i = l - 1, j = r + 1;
+    while (i < j) {
+        do i++; while (nums[i] < partition);
+        do j--; while (nums[j] > partition);
+        if (i < j) swap(nums[i], nums[j]);
+        }
+        if (k <= j)return quickselect(nums, l, j, k);
+        else return quickselect(nums, j + 1, r, k);
+}
 ```
 
 ## 动态规划
