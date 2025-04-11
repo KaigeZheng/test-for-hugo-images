@@ -1397,7 +1397,30 @@ public:
 
 给定不含重复数字的数组，返回不重复的所有子集。
 
+看到这题就想到大一时学习紫书的时候，被子集生成的增量构造法、二进制法、位向量法折磨地死去活来。Anyway，现在我都忘了。
 
+#### 二进制法
+
+二进制法是最快，最节省空间，最简单易懂的方法。可以将形如$XXX, X \in {0, 1}$的二进制串的每一位看作是否选取这个元素作为子集的一部分。从全0遍历到全1即可覆盖从空集到最长子集的所有情况。共`1 << n`种情况，实际从`0`遍历到`1 << n - 1`。
+
+```cpp
+class Solution {
+    vector<vector<int>> ans;
+    vector<int> tmp;
+public:
+    vector<vector<int>> subsets(vector<int>& nums) {
+        int n = nums.size();
+        for(int mask = 0; mask < (1 << n); ++mask) {
+            tmp.clear();
+            for(int i = 0; i < n; ++i) {
+                if(mask & (1 << i)) tmp.push_back(nums[i]);
+            }
+            ans.push_back(tmp);
+        }
+        return ans;
+    }
+};
+```
 
 ## 栈
 
