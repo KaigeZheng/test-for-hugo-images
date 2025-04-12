@@ -1422,6 +1422,109 @@ public:
 };
 ```
 
+#### 回溯法
+
+```cpp
+class Solution {
+    vector<vector<int>> ans;
+    vector<int> tmp;
+
+    void dfs(int cur, vector<int>& nums) {
+        if(cur == nums.size()) {
+            ans.push_back(tmp);
+            return;
+        }
+        /* 将选择这个元素的情况进入递归栈 */
+        tmp.push_back(nums[cur]);
+        dfs(cur + 1, nums);
+        /* 将不选择这个元素的情况进入递归栈 */
+        tmp.pop_back(); // 回溯：将刚插入的元素删除
+        dfs(cur + 1, nums);
+    }
+public:
+    vector<vector<int>> subsets(vector<int>& nums) {
+        dfs(0, nums);
+        return ans;
+    }
+};
+```
+
+### 电话号码的字母组合
+
+难度：Medium
+
+[17. 电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个仅包含数字`2-9`的字符串，返回所有能表示的字母组合。
+
+参考[上一题](https://leetcode.cn/problems/subsets/?envType=study-plan-v2&envId=top-100-liked)的回溯法解法，很容易写出AC代码。
+
+```cpp
+class Solution {
+    vector<string> ans;
+    vector<vector<char>> dict;
+    string tmp;
+
+    void init() {
+        dict.resize(10);
+        dict[2].push_back('a'); dict[2].push_back('b'); dict[2].push_back('c');
+        dict[3].push_back('d'); dict[3].push_back('e'); dict[3].push_back('f');
+        dict[4].push_back('g'); dict[4].push_back('h'); dict[4].push_back('i');
+        dict[5].push_back('j'); dict[5].push_back('k'); dict[5].push_back('l');
+        dict[6].push_back('m'); dict[6].push_back('n'); dict[6].push_back('o');
+        dict[7].push_back('p'); dict[7].push_back('q'); dict[7].push_back('r'); dict[7].push_back('s');
+        dict[8].push_back('t'); dict[8].push_back('u'); dict[8].push_back('v');
+        dict[9].push_back('w'); dict[9].push_back('x'); dict[9].push_back('y'); dict[9].push_back('z');
+    }
+
+    void dfs(int cur, string & digits) {
+        if(cur == digits.size()) {
+            ans.push_back(tmp);
+            return;
+        }
+        int num = digits[cur] - '0';
+        int n = dict[num].size();
+        for(int i = 0; i < n; ++i) {
+            tmp.push_back(dict[num][i]);
+            dfs(cur + 1, digits);
+            tmp.pop_back();
+        }
+    }
+public:
+    vector<string> letterCombinations(string digits) {
+        init();
+        if(digits.size())dfs(0, digits);
+        return ans;
+    }
+};
+```
+
+不过哈希表有更优雅的写法：
+
+```cpp
+unordered_map<char, string> map{
+    {'2', "abc"},
+    {'3', "def"},
+    {'4', "ghi"},
+    {'5', "jkl"},
+    {'6', "mno"},
+    {'7', "pqrs"},
+    {'8', "tuv"},
+    {'9', "wxyz"}
+};
+
+const string& letters = map.at(digit[i]);
+for(const char& letter : letters) {...}
+```
+
+### 组合总数
+
+难度：Medium
+
+[39. 组合总数](https://leetcode.cn/problems/combination-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+
+
 ## 栈
 
 ### 每日温度（栈）
