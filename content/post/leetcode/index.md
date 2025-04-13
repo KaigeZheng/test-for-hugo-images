@@ -1523,7 +1523,109 @@ for(const char& letter : letters) {...}
 
 [39. 组合总数](https://leetcode.cn/problems/combination-sum/?envType=study-plan-v2&envId=top-100-liked)
 
+给定一个无重复元素($> 0$)的整数数组和一个目标整数，找出数组种可以使数组和为目标的所有不同组合。
 
+对于这类寻找所有可行解的题，可以尝试用搜索回溯来解决。实际上还是遍历每一种可能的组合（搜索树），但只有和为0时才被视为有效解。
+
+```cpp
+class Solution {
+    vector<vector<int>> ans;
+    vector<int> combine;
+    void dfs(vector<int>& candidates, int target, int idx) {
+        if(idx == candidates.size()) return;
+        if(target == 0) {
+            ans.emplace_back(combine);
+            return;
+        }
+        dfs(candidates, target, idx + 1);
+        if(target - candidates[idx] >= 0) {
+            combine.emplace_back(candidates[idx]);
+            dfs(candidates, target - candidates[idx], idx);
+            combine.pop_back();
+        }
+    }
+public:
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        dfs(candidates, target, 0);
+        return ans;
+    }
+};
+```
+
+### 括号生成
+
+难度：Medium
+
+[22. 括号生成](https://leetcode.cn/problems/generate-parentheses/?envType=study-plan-v2&envId=top-100-liked)
+
+生成$n$对括号，返回所有可能且有效的括号组合。
+
+思路很好想，但是第一次写的时候发现实现有点困难。因为括号的有效性限制，得控制好`(`的入栈次数总是比`)`要多。因此这里还需要两个变量记录`(`和`)`的个数。
+
+```cpp
+class Solution {
+    vector<string> ans;
+    string tmp;
+    void dfs(int n,int l, int r) {
+        if(tmp.size() == n * 2) {
+            ans.emplace_back(tmp);
+            return;
+        }
+        if(l < n) {
+            tmp.push_back('(');
+            dfs(n, l + 1, r);
+            tmp.pop_back();
+        }
+        if(r < l) { // 注意是r < l
+            tmp.push_back(')');
+            dfs(n, l, r + 1);
+            tmp.pop_back();
+        }
+
+    }
+public:
+    vector<string> generateParenthesis(int n) {
+        dfs(n, 0, 0);
+        return ans;
+    }
+};
+```
+
+### 单词搜索
+
+难度：Medium
+
+[79. 单词搜索](https://leetcode.cn/problems/word-search/?envType=study-plan-v2&envId=top-100-liked)4
+
+给定二维字符网格和一个字符串单词，如果可以通过水平/垂直移动找到这个单词就返回`true`；否则返回`false`。
+
+很容易写出DFS代码，但怎么debug都不能AC。最后发现是**同一个单元格内的字母不允许被重复使用**这个条件导致的。必须要在继续DFS前排除这个单元格(`board[x][y] = '?'`)，并在DFS结束后回溯（`board[x][y] = word[idx]`）。
+
+```cpp
+class Solution {
+    bool dfs(vector<vector<char>>& board, const string& word, int x, int y, int idx) {
+        if(x < 0 || y < 0 || x >= board.size() || y >= board[0].size() || board[x][y] != word[idx]) {
+            return false;
+        }
+        if(idx == word.size() - 1) return true;
+        bool result = false;
+        board[x][y] = '?';
+        result = dfs(board, word, x + 1, y, idx + 1) || dfs(board, word, x, y + 1, idx + 1) ||
+                 dfs(board, word, x - 1, y, idx + 1) || dfs(board, word, x, y - 1, idx + 1);
+        board[x][y] = word[idx];
+        return result;
+    }
+public:
+    bool exist(vector<vector<char>>& board, string word) {
+        for(int i = 0; i < board.size(); ++i) {
+            for(int j = 0; j < board[0].size(); ++j) {
+                if(dfs(board, word, i, j, 0)) return true;
+            }
+        }
+        return false;
+    }
+};
+```
 
 ## 栈
 
