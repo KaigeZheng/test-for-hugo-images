@@ -1627,6 +1627,120 @@ public:
 };
 ```
 
+### 分割回文串
+
+难度：Medium
+
+[131. 分割回文串](https://leetcode.cn/problems/palindrome-partitioning/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串，将其分割成一些子串，使每个子串都是回文串，返回所有可能的分割方案。初见没有思路！
+
+#### 回溯+DP
+
+要求所有分割方案，使用搜索+回溯枚举所有可能的分割方法。假设当前搜索到第$i$个字符，且$s[0..i-1]$位置的所有字符已被分割成若干个回文串，那么就需要枚举下一个回文串的右边界$j$，使$s[i..j]$是一个回文串。因此回溯方法是：如果$s[i..j]$是回文串，那么加入$ans$并以$j+1$作为新的$i$进行下一层搜索，并在未来的回溯时将$s[i..j]$从ans移除。(注意`string::substr(start, len)`)
+
+除此之外，每次判断回文串需要用双指针，时间复杂度$\Theta(n)$。多次判断显然有重复计算，因此用DP把判断任意$s[i..j]$是否为回文串降低到$\Theta(1)$。
+
+设$f(i, j)$表示$s[i..j]$是否为回文串，有状态转移方程：
+
+$$f(i, j) = \begin{cases}
+True, i\geq j \\
+f(i+1, j-1)\&&(s[i]==s[j]),i\lt j
+\end{cases}$$
+
+```cpp
+class Solution {
+    vector<vector<string>> ans;
+    vector<string> tmp;
+    int n;
+
+    vector<vector<int>> f;
+
+    void dfs(const string& s, int i) {
+        if(i == n) {
+            ans.emplace_back(tmp);
+            return;
+        }
+        for(int j = i; j < n; ++j) {
+            if(f[i][j]) {
+                tmp.push_back(s.substr(i, j - i + 1));
+                dfs(s, j + 1);
+                tmp.pop_back();
+            }
+        }
+    }
+public:
+    vector<vector<string>> partition(string s) {
+        n = s.size();
+        f.resize(n);
+        for(auto& row : f) row.resize(n, true);
+        for(int i = n - 1; i >= 0; --i) {
+            for(int j = i + 1; j < n; ++j) {
+                f[i][j] = (s[i] == s[j]) && f[i + 1][j - 1];
+            }
+        }
+        dfs(s, 0);
+        return ans;
+    }
+};
+```
+
+#### 回溯+记忆化搜索
+
+众所周知，DP和记搜是可以转换的。
+
+```cpp
+class Solution {
+    vector<vector<string>> ans;
+    vector<string> tmp;
+    int n;
+
+    vector<vector<int>> f;
+
+    void dfs(const string& s, int i) {
+        if(i == n) {
+            ans.push_back(tmp);
+            return;
+        }
+        for(int j = i; j < n; ++j) {
+            if(check(s, i, j) == 1) {
+                tmp.push_back(s.substr(i, j - i + 1));
+                dfs(s, j + 1);
+                tmp.pop_back();
+            }
+        }
+    }
+
+    int check(const string& s, int i, int j) {
+        if(f[i][j]) {
+            return f[i][j];
+        }
+        if(i >= j) {
+            return f[i][j] = 1;
+        }
+        return f[i][j] = (s[i] == s[j] ? check(s, i + 1, j - 1) : -1);
+    }
+public:
+    vector<vector<string>> partition(string s) {
+        n = s.size();
+        f.resize(n);
+        for(auto& row : f) row.resize(n);
+        dfs(s, 0);
+        return ans;
+    }
+};
+```
+
+### N皇后
+
+难度：Hard
+
+[51. N皇后](https://leetcode.cn/problems/n-queens/description/?envType=study-plan-v2&envId=top-100-liked)
+
+又想起了被紫书支配的恐惧...
+
+
+
 ## 栈
 
 ### 每日温度（栈）
