@@ -33,7 +33,7 @@ weight: 1
 
 - [x] ~~_~~添加评论系统~~_~~（使用插件[utterances](https://github.com/utterance)搭建）
 
-- [x] ~~配置搜索引擎站点地图~~（目前已经能被[bing](https://www.bing.com/)、[google](https://google.com/)搜索到）
+- [x] ~~配置搜索引擎站点地图~~（目前已经能被[bing](https://www.bing.com/search?q=Kambri%27s+Blog&form=QBLH&sp=-1&lq=0&pq=kambri%27s+&sc=12-9&qs=n&sk=&cvid=0ADCEB3C38214CB08D36A386D38DCCF0)、[google](https://www.google.com/search?q=Kambri%27s+Blog&sca_esv=1c525e0389ef8c5d&sxsrf=AHTn8zrOcUPR7YiLpPhLxp-lWwiXfDd2VQ%3A1744784164778&ei=JEv_Z-WoL7-kkPIPjfXQsQg&ved=0ahUKEwjlyufC89uMAxU_EkQIHY06NIYQ4dUDCBA&uact=5&oq=Kambri%27s+Blog&gs_lp=Egxnd3Mtd2l6LXNlcnAiDUthbWJyaSdzIEJsb2cyCxAAGIAEGLADGKIEMggQABiwAxjvBTIIEAAYsAMY7wVInglQjQdYjQdwAXgAkAEAmAEAoAEAqgEAuAEDyAEA-AEBmAIBoAICmAMAiAYBkAYDkgcBMaAHALIHALgHAA&sclient=gws-wiz-serp)搜索到）
 
 - [ ] Last but not least，更多contributory文章
 
