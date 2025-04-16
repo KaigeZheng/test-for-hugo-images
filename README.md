@@ -4,21 +4,11 @@
 
 如果你喜欢本站点的话，欢迎给这个仓库一个star，感谢。
 
-站点：https://kaigezheng.github.io/
+站点：
 
-# TODOLIST
++ https://kaigezheng.github.io/
 
-- [ ] 发布更多博文
-
-- [ ] 完善标签系统和配图
-
-- [ ] 完善友链
-
-- [ ] 完善社交媒体
-
-- [ ] 补充About
-
-- [ ] 配置CDN
++ www.kambri.top
 
 # 寄语
 

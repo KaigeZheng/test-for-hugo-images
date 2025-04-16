@@ -29,7 +29,7 @@ weight: 1
 
 建设站点计划TODOLIST：
 
-- [ ] 配置CDN并绑定域名
+- [x] ~~_~~配置CDN并绑定域名~~_~~（可以通过`www.kambri.top`或`kambri.top`访问，但未配置SSL证书，因此只能通过http明文传输）
 
 - [x] ~~_~~添加评论系统~~_~~（使用插件[utterances](https://github.com/utterance)搭建）
 
