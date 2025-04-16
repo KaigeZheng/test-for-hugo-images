@@ -1739,6 +1739,113 @@ public:
 
 又想起了被紫书支配的恐惧...
 
+```cpp
+class Solution {
+    vector<vector<string>> ans;
+    
+    void dfs(vector<string>& cur, int level, int n) {
+        if(level == n) {
+            ans.push_back(cur);
+            return;
+        }
+        // 遍历第level行的每一列放置皇后的情况，并回溯
+        for(int j = 0; j < n; ++j) {
+            if(check(cur, level, j)) {
+                cur[level][j] = 'Q';
+                dfs(cur, level + 1, n);
+                cur[level][j] = '.';
+            }
+        }
+    }
+
+    bool check(const vector<string>& cur, int i, int j) {
+        int n = cur.size();
+        for(int a = 0; a < n; ++a) { // 上
+            if(cur[a][j] == 'Q') return false;
+        }
+        for(int a = i, b = j; a >= 0 && b >= 0; --a, --b) { // 左上
+            if(cur[a][b] == 'Q') return false;
+        }
+        for(int a = i, b = j; a >= 0 && b < n; --a, ++b) { // 右上
+            if(cur[a][b] == 'Q') return false;
+        }
+        return true;
+    }
+public:
+    vector<vector<string>> solveNQueens(int n) {
+        vector<string> cur(n, string(n, '.'));
+        dfs(cur, 0, n);
+        return ans;
+    }
+};
+```
+
+## 二分查找
+
+### 搜索插入位置
+
+难度：Easy
+
+[35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/description/?envType=study-plan-v2&envId=top-100-liked)
+
+二分查找板题。
+
++ STL `return lower_bound(nums.begin(), nums.end(), target) - nums.begin();`
+
++ 二分查找
+
+```cpp
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+        int n = nums.size();
+        int l = 0, r = n - 1, ans = n;
+        while(l <= r) {
+            int mid = ((r - l) >> 1) + l;
+            if(target <= nums[mid]) {
+                ans = mid;
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        } 
+        return ans;
+    }
+};
+```
+
+### 搜索二维矩阵
+
+难度：Medium
+
+[74. 搜索二维矩阵](https://leetcode.cn/problems/search-a-2d-matrix/?envType=study-plan-v2&envId=top-100-liked)
+
+给定严格递增顺序填充的二维矩阵，查找$target$是否在矩阵中。很奇怪的数据，$\Theta(n^2)$的暴力法也能AC，甚至0ms击败100.00%...
+
+官解的写法有点高级，总之就是先在列维度二分查找，锁定行后在行维度二分查找。
+
+```cpp
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        auto row = upper_bound(matrix.begin(), matrix.end(), target, [](const int b, const vector<int> &a) {
+            return b < a[0];
+        });
+        if(row == matrix.begin()) {
+            return false;
+        }
+        --row;
+        return binary_search(row->begin(), row->end(), target);
+    }
+};
+```
+
+### 在排序数组中查找元素的第一个和最后一个位置
+
+难度：Medium
+
+[34. 在排序数组中查找元素的第一个和最后一个位置](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/description/?envType=study-plan-v2&envId=top-100-liked)
+
 
 
 ## 栈
