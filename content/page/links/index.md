@@ -1,7 +1,7 @@
 ---
 title: "友链|Links"
 slug: "links"
-layout: "links"
+# layout: "links"
 links:
   - title: 本站点的GitHub仓库
     description: 本站点托管于GitHub Pages
@@ -18,6 +18,8 @@ menu:
             icon: link
 # comments: true
 ---
+
+> 此页面正在Debug中...
 
 这里将展示一些友情链接，如有图片失效请联系`kambri2003 DOT outlook DOT com`。
 
