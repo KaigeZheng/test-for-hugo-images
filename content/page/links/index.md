@@ -13,10 +13,10 @@ links:
     image: "https://www.qhu-hdacp.cn/HDACP.png"
 menu:
     main: 
-        weight: 4
+        weight: 3
         params:
             icon: link
-comments: true
+# comments: true
 ---
 
 这里将展示一些友情链接，如有图片失效请联系`kambri2003 DOT outlook DOT com`。
