@@ -4,7 +4,7 @@ description: AI
 slug: AI1
 date: 2025-04-05 10:23:00+0800
 math: true
-image: img/cover.jpg
+# image: img/cover.jpg
 categories:
     - 文档
     - AI Infra

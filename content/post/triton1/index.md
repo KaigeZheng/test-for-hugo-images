@@ -1,8 +1,8 @@
 ---
-title: Triton学习——Vector Addition, Fused Softmax
+title: Triton学习——Vector Addition, Fused Softmax, Matrix Multiplication
 description: Triton学习笔记（一）
 slug: Triton1
-date: 2025-03-06 10:23:00+0800
+date: 2025-03-06 20:22:10+0800
 math: true
 image: img/cover.jpg
 categories:
