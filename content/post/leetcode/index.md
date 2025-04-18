@@ -1907,6 +1907,32 @@ public:
 };
 ```
 
+### 寻找旋转排序数组中的最小值
+
+难度：Medium
+
+[153. 寻找旋转排序数组中的最小值](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定两段局部升序的合并数组，以$\Theta(log n)$查找最小值。跟上一题[33. 搜索旋转排序数组](https://leetcode.cn/problems/search-in-rotated-sorted-array/?envType=study-plan-v2&envId=top-100-liked)很像，但是二分时的情况少了一些，因为只需要找最小值，画个图会比较好。
+
+```cpp
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int l = 0, r = nums.size() - 1;
+        while(l < r) {
+            int mid = (l + r) >> 1;
+            if(nums[mid] < nums[r]) { // 最小值在[l, mid]中
+                r = mid;
+            } else { // 最小值在(mid, r]中
+                l = mid + 1;
+            }
+        }
+        return nums[r]; // or nums[l]
+    }
+};
+```
+
 ## 栈
 
 ### 每日温度（栈）
