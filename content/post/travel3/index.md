@@ -2,7 +2,7 @@
 title: 突然的武汉之旅
 description: 出差小记
 slug: travel3
-date: 2024-12-17 19:07:00+0800
+date: 2024-12-17 20:02:25+0800
 image: img/cover.png
 categories:
     - 生活

@@ -1933,6 +1933,18 @@ public:
 };
 ```
 
+### 寻找两个正序数组的中位数
+
+难度：Hard
+
+[4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定两个大小分别为$m$和$n$的正序数组，以$\Theta(log(m+n))$返回两个正序数组的中位数，
+
+已知数组长度，最直观的思路是维护双指针，以$\Theta(1)$的空间复杂度和$\Theta(n+m)$的时间复杂度寻找中位数。
+
+不会写，先搁置。
+
 ## 栈
 
 ### 每日温度（栈）

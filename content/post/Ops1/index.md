@@ -2,7 +2,7 @@
 title: 高性能集群运维——装机
 description: 运维笔记（一）
 slug: Ops1
-date: 2025-03-06 12:03:13+0800
+date: 2025-04-23 20:23:31+0800
 math: true
 image: img/cover.png
 categories:
@@ -99,9 +99,27 @@ APT::Periodic::Unattended-Upgrade "0";
 修改本地`Users/username/.ssh/config`:
 
 ```bash
-Host <IP>
+Host <hostname>
   HostName <IP>
+  Port <port>
   User <username>
+  RemoteForward <Port1> 127.0.0.1:<Port2>
+```
+
+补充一点最近刚学到的，在`.ssh/config`中通过配置`ProxyJump`来实现无缝跳板连接的方法。
+
+```bash
+Host <hostname>
+  HostName <IP>
+  Port <port>
+  User <username>
+  RemoteForward <Port1> 127.0.0.1:<Port2>
+
+Host <target>
+  HostName <IP>
+  Port <port>
+  User <username>
+  ProxyJump <hostname>
   RemoteForward <Port1> 127.0.0.1:<Port2>
 ```
 
