@@ -106,7 +106,7 @@ Host <hostname>
   RemoteForward <Port1> 127.0.0.1:<Port2>
 ```
 
-补充一点最近刚学到的，在`.ssh/config`中通过配置`ProxyJump`来实现无缝跳板连接的方法。
+补充一点最近刚学到的，在`.ssh/config`中通过配置`ProxyJump`来实现无缝跳板连接的方法。需要注意的是，如果需要免密的话，需要在destination主机的`~/.ssh/authorized_keys`加入**本地**公钥。
 
 ```bash
 Host <hostname>
@@ -115,7 +115,7 @@ Host <hostname>
   User <username>
   RemoteForward <Port1> 127.0.0.1:<Port2>
 
-Host <target>
+Host <destination>
   HostName <IP>
   Port <port>
   User <username>
