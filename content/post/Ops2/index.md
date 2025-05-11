@@ -1,8 +1,8 @@
 ---
-title: 高性能集群运维——软件环境
+title: 高性能集群运维——软件环境（Modules、MPI、oneAPI）
 description: 运维笔记（二）
 slug: Ops2
-date: 2025-05-11 11:18:31+0800
+date: 2025-05-11 19:47:14+0800
 math: true
 image: img/cover2.png
 categories:
@@ -13,6 +13,8 @@ tags:
     - 运维
 weight: 10
 ---
+
+本篇博文介绍集群常用版本管理软件MODULES，以及MPI的两种实现（UCX+OpenMPI/MPICH）、Intel oneAPI的安装配置。MODULES（最新版的发行版发布自24年11月）的软件依赖繁琐且modulefile需要用TCL写（可以用生成式AI解决），未来有机会学习一下更易用的spack。
 
 ## MODULES (v5.4.0)
 
