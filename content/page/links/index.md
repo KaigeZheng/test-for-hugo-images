@@ -16,7 +16,7 @@ menu:
         weight: 4
         params:
             icon: link
-# comments: true
+comments: false
 ---
 
 这里将展示一些友情链接，如有图片失效请联系`kambri2003 DOT outlook DOT com`。
