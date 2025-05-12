@@ -39,10 +39,6 @@ weight: 1
 
 博文更新计划TODOLIST：
 
-- [x] MPI、算法导论等学习笔记（迁移）
-
-- [x] 运维记录（迁移）
-
 - [ ] 旅行回忆录，以往的旅行经历就靠零星的回忆和些许照片还原罢，这或许也不错
 
 如果你喜欢我的博客，欢迎来到[站点仓库](https://github.com/KaigeZheng/KaigeZheng.github.io)点一个star，谢谢！
