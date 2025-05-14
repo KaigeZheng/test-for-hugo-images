@@ -18,6 +18,8 @@ weight: 10
 
 ## MODULES (v5.4.0)
 
+![ENVIRONMENT MODULES](img/1.png)
+
 ### 参考
 
 [TCL官网](https://www.tcl.tk/)
@@ -125,6 +127,10 @@ source /home/Modules/init/profile.sh  # 建议写入/etc/profile，否则每次�
 
 ### 安装UCX (optional)
 
+{{< figure src="img/2.png#center" width=200px" title="Unified Communication X">}}
+
+<!-- ![Unified Communication X](img/2.png?w=300) -->
+
 ```bash
 wget https://github.com/openucx/ucx/releases/download/v1.15.0/ucx-1.15.0.tar.gz
 tar -xvzf ucx-1.15.0.tar.gz
@@ -148,6 +154,8 @@ make install
 可能遇到报错：`configure: error: UCX installation does not meet minimum version requirement (v1.9.0). Please upgrade your installation, or use --with-ucx=embedded.`
 
 ### 安装OpenMPI (v5.0.0)
+
+![OpenMPI](img/3.png)
 
 ```bash
 wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.0.tar.gz
@@ -187,6 +195,8 @@ prepend-path MANPATH "${MPI_HOME}/share/man"
 [Intel oneAPI镜像站](https://get.hpc.dev/vault/intel/)
 
 ### 安装Intel oneAPI(v2025.0 including Base Toolkit and HPC Toolkit)
+
+![Intel oneAPI](img/4.png)
 
 按照官方的offline installation方式下载安装即可。需要注意的是Intel更新oneAPI时会移除老版本界面，因此安装老版本时需要靠镜像站等途径。但新版本又不好用，如2025.0的`mpiicc`仍然使用`icc`作为compiler，但是2025.0（包括2023后期版本和2024.x）的套件里都已不包含`icc`了。`icc`已在2023下半年发布的oneAPI中被移除。
 
