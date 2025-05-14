@@ -117,9 +117,9 @@ source /home/Modules/init/profile.sh  # 建议写入/etc/profile，否则每次�
 
 [UCX仓库](https://github.com/openucx/ucx)
 
-[release v1.15.0](https://github.com/openucx/ucx/releases/download/v1.15.0/ucx-1.15.0.tar.gz)
+<!-- [ucx release v1.15.0](https://github.com/openucx/ucx/releases/download/v1.15.0/ucx-1.15.0.tar.gz)
 
-[release v1.17.0](https://github.com/openucx/ucx/releases/download/v1.17.0/ucx-1.17.0.tar.gz)
+[ucx release v1.17.0](https://github.com/openucx/ucx/releases/download/v1.17.0/ucx-1.17.0.tar.gz) -->
 
 ---
 
