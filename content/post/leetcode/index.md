@@ -1979,6 +1979,116 @@ public:
 };
 ```
 
+## 贪心算法
+
+### 买卖股票的最佳时机
+
+难度：Easy
+
+[121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一段时间的股价，选择某一天购买并在某一天卖出，求最大利润。
+
+可以把问题转换成对于$(i, j)$，求$max(prices[j] - prices[i]), j > i$。
+
+暴力$\Theta(n^2)$显然是不行的，需要只遍历一轮的解法。从第一天遍历到最后一天，如果遇到了更低的股价就更新`_min`（记录最低点），假设在这一天买入，那么往后遍历的时候，第`i`填的利润就是`prices[i] - _min`。
+
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int inf = 0x3f3f3f3f;
+        int _min = inf, ans = 0;
+        for(int price : prices) {
+            ans = max(ans, price - _min);
+            _min = min(price, _min);
+        }
+        return ans;
+    }
+};
+```
+
+### 跳跃游戏
+
+难度：Medium
+
+[55. 跳跃游戏](https://leetcode.cn/problems/jump-game/?envType=study-plan-v2&envId=top-100-liked)
+
+给定非负整数数组，你位于数组的第一个下标，每个元素代表在该下标可以移动的最大长度，判断是否能到达最后一个下标。
+
+太久没写题了，看了一点题解就豁然开朗了。显然要找出一种$\Theta(n)$的解法。可以在遍历时维护一个变量`max_len`表示目前可达的最远位置，那么对于每个元素要么不更新，要么用更大的`index + step[i]`更新`max_len`，只要`max_len`能覆盖到数组尾即通过。
+
+```cpp
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int max_len = 0;
+        bool ans = false;
+        for(int i = 0; i < nums.size(); ++i) {
+            if(i > max_len) break;
+            if(i == nums.size() - 1) ans = true;
+            max_len = max(max_len, i + nums[i]);
+        }
+        return ans;
+    }
+};
+```
+
+### 跳跃游戏 II
+
+难度：Medium
+
+[45. 跳跃游戏II](https://leetcode.cn/problems/jump-game-ii/description/?envType=study-plan-v2&envId=top-100-liked)
+
+在上一题的基础上，最远不会跳过最后一个下标，求到达最后一个下标的最小跳跃次数。不难，维护一个数组`ans[]`表示移动到每个下标的最小跳跃次数（`ans[0] = 0, ans[1:] = inf`），对于每个元素，将能移动到的下标要么不更新，要么更新为更小的`ans[i] + 1`。
+
+```cpp
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> ans(n, 0x3f3f3f3f);
+        ans[0] = 0;
+        for(int i = 0; i < n; ++i) {
+            for(int j = 1; j <= nums[i] && i + j < n; ++j) {
+                ans[i + j] = min(ans[i + j], ans[i] + 1);
+            }
+        }
+        return ans[n - 1];
+    }
+};
+```
+
+### 划分字母区间
+
+[763. 划分字母区间](https://leetcode.cn/problems/partition-labels/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串，顺序切分成多个字符串，每个字符串内出现过的字母不允许出现在其他字符串。
+（如"ababcc"切分成["abab", "cc"]）
+
+值得学习一下题解。给出一种时间复杂度为$\Theta(n)$，空间复杂度为$\Theta(1)$的解法。**预处理**很重要，需要遍历字符串，得到每个字母最后一次出现的下标位置（`last[s[i] - 'a'] = i`）。接下来用`start`和`end`两个变量限定分割字符串的范围，对于当前的字符串，`start`不动，`end`为`s[start]`字母最后一次出现的下标，同时需要保证中间的字母都在`[start, end]`内，否则继续扩大`end`（贪心）。
+
+```cpp
+class Solution {
+public:
+    vector<int> partitionLabels(string s) {
+        int last[26];
+        int n = s.size();
+        vector<int> ans;
+        for(int i = 0; i < n; ++i) last[s[i] - 'a'] = i;
+        int start = 0, end = 0;
+        for(int i = 0; i < n; ++i) {
+            end = max(end, last[s[i] - 'a']);
+            if(i == end) {
+                ans.push_back(end - start + 1);
+                start = end + 1;
+            }
+        }
+        return ans;
+    }
+};
+```
+
 ## 动态规划
 
 ### 最大正方形（DP）
