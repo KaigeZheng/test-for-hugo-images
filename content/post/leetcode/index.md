@@ -474,7 +474,131 @@ public:
 
 [53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/?envType=study-plan-v2&envId=top-100-liked)
 
+## 矩阵
 
+### 矩阵置零
+
+难度：Medium
+
+[73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定mxn的矩阵，如果一个元素为0，使用原地算法将所在行列所有元素都设0。
+
+Solution 1（时间复杂度$\Theta(2mn)$，空间复杂度$\Theta(m+n)$）：用两个数组，分别记录每一行每一列是否有零出现，最后更新原矩阵
+
+Solution 2（时间复杂度$\Theta(2mn)$，空间复杂度$\Theta(2)$）：在Solution 1的基础上优化，用矩阵的第一行和第一列替代两个标记数组，并用两个标记变量分别记录第一行和第一列是否包含0。节省了空间，不过步骤麻烦了很多。
+
+```cpp
+# Solution 2
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        int m = matrix.size();
+        int n = matrix[0].size();
+        bool row_1 = false, col_1 = false;
+        // 检查第一行和第一列
+        for(int i = 0; i < m; ++i) if(!matrix[i][0]) row_1 = true;
+        for(int i = 0; i < n; ++i) if(!matrix[0][i]) col_1 = true;
+        // 检查其余矩阵
+        for(int i = 1; i < m; ++i) {
+            for(int j = 1; j < n; ++j) {
+                if(!matrix[i][j]) matrix[i][0] = matrix[0][j] = 0;
+            }
+        }
+        // 更新全局矩阵(注意是从index=1开始)
+        for(int i = 1; i < m; ++i) if(!matrix[i][0]) for(int j = 0; j < n; ++j) matrix[i][j] = 0;
+        for(int j = 1; j < n; ++j) if(!matrix[0][j]) for(int i = 0; i < m; ++i) matrix[i][j] = 0;
+        // 更新第一行和第一列
+        if(row_1) for(int i = 0; i < m; ++i) matrix[i][0] = 0;
+        if(col_1) for(int i = 0; i < n; ++i) matrix[0][i] = 0;
+    }
+};
+```
+
+### 螺旋矩阵
+
+难度：Medium
+
+[54. 螺旋矩阵](https://leetcode.cn/problems/spiral-matrix/?envType=study-plan-v2&envId=top-100-liked)
+
+给定mxn的矩阵，按照顺时针螺旋向里的顺序返回矩阵中的所有元素。
+
+暴力模拟，非常不优雅的代码，就不贴了。
+
+### 旋转图像
+
+难度：Medium
+
+[48. 旋转图像](https://leetcode.cn/problems/rotate-image/?envType=study-plan-v2&envId=top-100-liked)
+
+给定nxn的矩阵，原地顺时针旋转90度。
+
+Solution 1（时间复杂度$\Theta(n^2)$，空间复杂度$\Theta(n^2)$）：找规律可以发现$matrix[row][col]$在旋转后的位置为$matrix[col][n - row - 1]$。因此用一个二维辅助矩阵存储旋转后的矩阵，最后更新即可。
+
+Solution 2（时间复杂度$\Theta(n^2)$，空间复杂度$\Theta(1)$）：很巧妙，顺时针旋转90°等价于**先水平翻转一次**（$matrix[row][col] \leftrightarrow matrix[n - row - 1][col]$），**再主对角线翻转一次**（$matrix[row][col] \leftrightarrow matrix[col][row]$）。
+
+```cpp
+# Solution 2
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n = matrix.size();
+        // 水平翻转
+        for(int i = 0; i < n / 2; ++i) {
+            for(int j = 0; j < n; ++j) {
+                swap(matrix[i][j], matrix[n - i - 1][j]);
+            }
+        }
+        // 主对角线翻转
+        for(int i = 0; i < n; ++i) {
+            for(int j = 0; j < i; ++j) {
+                swap(matrix[i][j], matrix[j][i]);
+            }
+        }
+    }
+};
+```
+
+### 搜索二维矩阵II
+
+难度：Medium
+
+[240. 搜索二维矩阵II](https://leetcode.cn/problems/search-a-2d-matrix-ii/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定mxn的矩阵，每行的元素从左到右升序，每列的元素从上到下升序，搜索目标值target是否存在。
+
+Solution 1：跟搜索二维矩阵I不同，不是顺序严格递增，因此不能先对列二分，锁定某一行后再二分，但是可以对每一行都二分，代码简洁值得学习。
+
+```cpp
+# Solution 1
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        for(const auto& row: matrix) {
+            auto it = lower_bound(row.begin(), row.end(), target);
+            if(it != row.end() && *it == target) return true;
+        }
+        return false;
+    }
+};
+```
+
+Solution 2：很巧妙的方法，以右上角为二叉树的根节点，就得到了一个向左子树移动变小，向右子树移动变大的二叉搜索树！天才解法！
+
+```cpp
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int i = matrix.size() - 1, j = 0;
+        while(i >= 0 && j < matrix[0].size()) {
+            if(matrix[i][j] > target) --i;
+            else if(matrix[i][j] < target) ++j;
+            else return true;
+        }
+        return false;
+    }
+};
+```
 
 ## 链表
 
