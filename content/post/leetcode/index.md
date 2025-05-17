@@ -474,6 +474,146 @@ public:
 
 [53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/?envType=study-plan-v2&envId=top-100-liked)
 
+给定整数数组，求连续子数组的最大和。
+
+靠肌肉记忆秒了，贪心算法可解。
+
+```cpp
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        long long ans = -10005, cur = 0;
+        for(const int& x: nums) {
+            cur += x;
+            ans = max(cur, ans);
+            if(cur < 0) cur = 0;
+        }
+        return ans;
+    }
+};
+```
+
+### 合并区间
+
+难度：Medium
+
+[56. 合并区间](https://leetcode.cn/problems/merge-intervals/?envType=study-plan-v2&envId=top-100-liked)
+
+给定数组`pair<int, int>[]`，合并所有重叠的区间并返回一个不重叠的区间数组。
+
+写了半天错误的解法，发现不能简单地扫一遍数组并维护一个一维数组。这样会导致类似`[[1, 4], [5, 6]]`这样的区间输出`[1, 6]`，而实际上中间并不连续，一开始就走上了不归路...
+
+正解是按区间的左端点排序，那么可以合并的区间一定是连续的。用结果的最后一个区间判断是否重叠，如果重叠就更新最后一个区间的右端点，否则加入新区间。代码值得学习。
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end(), [](auto& x, auto& y) {
+            return x[0] < y[0];
+        }); /* 虽然默认也是按第一个元素排的 */
+    vector<vector<int>> result;
+    result.push_back(intervals[0]);
+    for(int i = 1; i < intervals.size(); ++i) {
+        int start = intervals[i][0], end = intervals[i][1], n = result.size();
+        if(start <= result[n - 1][1]) {
+            result[n - 1][1] = max(result[n - 1][1], end);
+        } else {
+            result.push_back(intervals[i]);
+        }
+    }
+    return result;
+    }
+};
+```
+
+### 轮转数组
+
+难度：Medium
+
+[189. 轮转数组](https://leetcode.cn/problems/rotate-array/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数数组，将数组中的元素向右原地轮转`k`个位置。
+
+用最直接的方法来模拟即可，记得防止溢出(`k %= nums.size()`)。
+
+```cpp
+class Solution {
+public:
+    void rotate(vector<int>& nums, int k) {
+        vector<int> tmp;
+        k %= nums.size(); // 记得防溢出!
+        for(int i = nums.size() - k; i < nums.size(); ++i) {
+            tmp.push_back(nums[i]);
+        }
+        for(int i = nums.size() - 1; i >= k; --i) {
+            nums[i] = nums[i - k];
+        }
+        for(int i = 0; i < k; ++i) {
+            nums[i] = tmp[i];
+        }
+    }
+};
+```
+
+### 除自身以外数组的乘积
+
+难度：Medium
+
+[238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数数组`nums`，返回数组`answer`，其中`answer[i]`等于`nums`中除`nums[i]`外其余各元素乘积。（禁用除法，要求时间复杂度$\Theta(n)$）
+
+初见无思路。题意等价于，只要知道`i`左边所有数的乘积和`i`右边所有数的乘积即可得到`answer[i]`->前缀和！
+
+定义`pre[i]`表示从`nums[0]`到`nums[i-1]`的乘积；定义`suf[i]`表示从`nums[i+1]`到`nums[n-1]`的乘积。
+
+```cpp
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> pre(n, 1);
+        for(int i = 1; i < n; ++i)      pre[i] = pre[i - 1] * nums[i - 1];
+        vector<int> suf(n, 1);
+        for(int i = n - 2; i >= 0; --i) suf[i] = suf[i + 1] * nums[i + 1];
+        vector<int> ans(n);
+        for(int i = 0; i < n; ++i)      ans[i] = pre[i] * suf[i];
+        return ans;
+    }
+};
+```
+
+### 缺失的第一个正数
+
+难度：Hard
+
+[41. 缺失的第一个正数](https://leetcode.cn/problems/first-missing-positive/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个未排序的整数数组，找出其中没有出现的最小的正整数（要求时间复杂度$\Theta(n)$，空间复杂度$\Theta(1)$）。
+
+初见无思路。很诡异的解法：1）将所有负数修改为$n+1$；2）遍历数组，如果绝对值在$[1, N]$中则将$|x| - 1$位置的数改为负数；3）遍历数组，如果每个数都是负数，则答案是$N + 1$，否则答案是第一个正数的位置加1（一种用位置index来映射真实数字的哈希表）。
+
+```cpp
+class Solution {
+public:
+    int firstMissingPositive(vector<int>& nums) {
+        int n = nums.size();
+        for(int& num: nums) {
+            if(num <= 0) num = n + 1;
+        }
+        for(int i = 0; i < n; ++i) {
+            int num = abs(nums[i]);
+            if(num <= n) nums[num - 1] = -abs(nums[num - 1]);
+        }
+        for(int i = 0; i < n; ++i) {
+            if(nums[i] > 0) return i + 1;
+        }
+        return n + 1;
+    }
+};
+```
+
 ## 矩阵
 
 ### 矩阵置零
@@ -2605,5 +2745,25 @@ public:
 
 [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/description/?envType=study-plan-v2&envId=top-100-liked)
 
-给定长度为$n+1$的数组，数字范围在$[1,n]$内，有一个重复的整数，返回这个重复的整数。不能修改数字且只用$\Theta(1)$的额外空间。
+给定长度为$n+1$的数组，数字范围在$[1,n]$内，有且只有一个重复的整数，返回这个重复的整数。（要求不修改原数组，空间复杂度为$\Theta(1)$）
 
+很难，前两种题解都看不懂...解法是快慢指针（Floyd判圈法），对`nums`数组建图$i \rightarrow nums[i]$，由于有重复的`nums[i]`，因此必然有两个`i`指向相同的`nums[i]`值（存在环路）。设置快慢指针，慢指针走一步，快指针走两步（`fast = nums[nums[fast]]`），一定会相遇。此时将慢指针放置起点0，快慢指针每次同时移动一步就一定会相遇。（还不太理解）
+
+```cpp
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int slow = 0, fast = 0;
+        do{
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while(slow != fast);
+        slow = 0;
+        while(slow != fast) {
+            slow = nums[slow];
+            fast = nums[fast];
+        }
+        return slow;
+    }
+};
+```
