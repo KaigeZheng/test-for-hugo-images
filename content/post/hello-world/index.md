@@ -3,7 +3,7 @@ title: Hello World
 description: 欢迎来到我的博客——
 slug: hello-world
 date: 2025-04-14 23:25:00+0800
-image: img/_cover.jpg
+image: img/cover.jpg
 categories:
     - 文档
 tags:
