@@ -858,6 +858,246 @@ public:
 
 不难，跳过。
 
+### 环形链表
+
+难度：Easy
+
+[141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/description/?envType=study-plan-v2&envId=top-100-liked)
+
+判断链表中是否存在环。
+
+Solution 1：哈希表，遍历链表直到空，如果遇到曾访问过的节点表示有环
+
+```cpp
+# Solution 1
+class Solution {
+public:
+    bool hasCycle(ListNode *head) {
+        unordered_set<ListNode*> hash;
+        while(head != nullptr) {
+            if(hash.count(head)) {
+                return true;
+            }
+            hash.insert(head);
+            head = head->next;
+        }
+        return false;
+    }
+};
+```
+
+Solution 2：快慢指针，可以将空间优化到$\Theta(1)$。Floyd判圈法的两个要点：1）通过快慢指针是否相遇判断是否存在环；2）判断存在环后，将慢指针放回起点，快慢指针同步移动，相遇点就是环起点。
+
+```cpp
+# Solution 2
+class Solution {
+public:
+    bool hasCycle(ListNode *head) {
+        if(!head || !head->next) return false;
+        ListNode* slow = head;
+        ListNode* fast = head->next;
+        while(slow != fast) {
+            if(!fast || !fast->next) return false;
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        return true;
+    }
+};
+```
+
+### 环形链表II
+
+难度：Medium
+
+[142. 环形链表II](https://leetcode.cn/problems/linked-list-cycle-ii/description/?envType=study-plan-v2&envId=top-100-liked)
+
+在判断是否有环的前提下，返回环起点或null。解法同上，哈希表或快慢指针，只是改成返回head。
+
+快慢指针的解法略有一些细节变化。
+
+```cpp
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        if(!head || !head->next) return nullptr;
+        /* 快慢指针务必初始化在同一起点 */
+        ListNode* slow = head;
+        ListNode* fast = head;
+        /* 判断条件是fast和fast->next存在 */
+        while(fast && fast->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+            if(slow == fast) break;
+        }
+        if(slow != fast) return nullptr;
+        slow = head;
+        while(slow != fast) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+        return slow;
+    }
+};
+```
+
+### 合并两个有序链表
+
+难度：Easy
+
+[21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/description/?envType=study-plan-v2&envId=top-100-liked)
+
+双指针可解，写的时候注意要记录一下头节点的位置，同时`ans`不能直接初始化为`list1`或`list2`。
+
+```cpp
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        ListNode* ans = new ListNode(-1);
+        ListNode* prev = ans;
+        ListNode* p1 = list1, *p2 = list2;
+        while(p1 || p2) {
+            if(p1 && p2) {
+                if(p1->val > p2->val) {
+                    ans->next = p2;
+                    p2 = p2->next;
+                }
+                else {
+                    ans->next = p1;
+                    p1 = p1->next;
+                }
+            } else if(p1) {
+                ans->next = p1;
+                p1 = p1->next;
+            } else if(p2) {
+                ans->next = p2;
+                p2 = p2->next;
+            }
+            ans = ans->next;
+        }
+        return prev->next;
+    }
+};
+```
+
+### 两数相加
+
+难度：Medium
+
+[2. 两数相加](https://leetcode.cn/problems/add-two-numbers/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定两个链表表示两个非负整数（逆序存储各数字），将两数相加并返回逆序链表。
+
+简单模拟一下加数和进位即可。
+
+```cpp
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        int first = (l1->val + l2->val) % 10, next = (l1->val + l2->val) / 10;
+        l1 = l1->next, l2 = l2->next;
+        ListNode* result = new ListNode(first);
+        ListNode* ans = result;
+        while(l1 || l2) {
+            ListNode* current = new ListNode();
+            if(l1 && l2) {
+                current->val = (l1->val + l2->val + next) % 10;
+                next = (l1->val + l2->val + next) / 10;
+            }
+            else if(l1) {
+                current->val = (l1->val + next) % 10;
+                next = (l1->val + next) / 10;
+            }
+            else if(l2) {
+                current->val = (l2->val + next) % 10;
+                next = (l2->val + next) / 10;
+            }
+            result->next = current;
+            result = result->next;
+            if(l1) l1 = l1->next;
+            if(l2) l2 = l2->next;
+        }
+        if(next != 0) result->next = new ListNode(next);
+        return ans;
+    }
+};
+```
+
+### 删除链表的倒数第N个结点
+
+难度：Medium
+
+[19. 删除链表的倒数第N个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/?envType=study-plan-v2&envId=top-100-liked)
+
+给定链表，删除倒数第`n`个节点并返回头结点。
+
+Solution 1:先跑一遍得到链表长度再删除，挣扎了半天加上`if(step == 0)`的情况就AC了。
+
+```cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        int N = 0;
+        ListNode* start = head;
+        while(head) {
+            head = head->next;
+            ++N;
+        }
+        int step = N - n;
+        if(step == 0) {
+            return start->next;
+        }
+        ListNode* remove = start;
+        for(int i = 0; i < step - 1; ++i) remove = remove->next;
+        remove->next = remove->next->next;
+        return start;
+    }
+};
+```
+
+Solution 2：居然没有想到，栈可太适合这题了，出栈的第`n`个节点就是需要删除的节点。
+
+```cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode* dummy = new ListNode(0, head);
+        stack<ListNode*> stk;
+        ListNode* cur = dummy;
+        while(cur) {
+            stk.push(cur);
+            cur = cur->next;
+        }
+        for(int i = 0; i < n; ++i) {
+            stk.pop();
+        }
+        ListNode* prev = stk.top(); // 待删除节点的前一个节点
+        prev->next = prev->next->next;
+        return dummy->next;
+    }
+};
+```
+
+Solution 3：双指针，可以将时间复杂度优化到常数级。`first`指针比`second`指针快`n`个节点，那么当`first`遍历到链表尾时，`second`就恰好处于倒数第`n`个节点。
+
+```cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode* dummy = new ListNode(0, head);
+        ListNode* first = head;
+        ListNode* second = dummy;
+        for(int i = 0; i < n; ++i) first = first->next;
+        while(first) {
+            first = first->next;
+            second = second->next;
+        }
+        second->next = second->next->next;
+        return dummy->next;
+    }
+};
+```
+
 ## 二叉树
 
 ### 二叉树的中序遍历
