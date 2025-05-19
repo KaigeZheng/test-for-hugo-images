@@ -1098,6 +1098,142 @@ public:
 };
 ```
 
+### 两两交换链表中的节点
+
+难度：Medium
+
+[24. 两两交换链表中的节点](https://leetcode.cn/problems/swap-nodes-in-pairs/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定链表，两两交换其中相邻的节点。
+
+有点绕，画个图会清晰很多。同时记得用`prev`维护前驱节点的连接。
+
+```cpp
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        ListNode* dummy = new ListNode(0, head);
+        ListNode* A;
+        ListNode* B;
+        ListNode* C;
+        ListNode* prev = dummy;
+        while(head && head->next) {
+            A = head, B = head->next, C = head->next->next, head = C;
+            prev->next = B;
+            B->next = A;
+            A->next = C;
+            prev = A;
+        }
+        return dummy->next;
+    }
+};
+```
+
+### K个一组翻转链表
+
+难度：Hard
+
+[25. K个一组翻转链表](https://leetcode.cn/problems/reverse-nodes-in-k-group/description/?envType=study-plan-v2&envId=top-100-liked)
+
+每`k`个节点一组进行翻转（将上一题的`k=2`扩展）。
+
+比上一题更复杂一些的模拟，还得稍微看一看代码。
+
+```cpp
+class Solution {
+    pair<ListNode*, ListNode*> Reverse(ListNode* head, ListNode* tail) {
+            ListNode* prev = tail->next;
+            ListNode* p = head;
+            while(prev != tail) {
+                ListNode* next = p->next;
+                p->next = prev;
+                prev = p;
+                p = next;
+            }
+            return {tail, head};
+        }
+public:
+    ListNode* reverseKGroup(ListNode* head, int k) {
+        ListNode* dummy = new ListNode(0, head);
+        ListNode *pre = dummy;
+        while(head) {
+            ListNode* tail = pre;
+            /* 判断剩余部分长度是否>=k */
+            for(int i = 0; i < k; ++i) {
+                tail = tail->next;
+                if(!tail) return dummy->next;
+            }
+            /* 寻找要翻转的链表尾 */
+            ListNode* next = tail->next;
+            pair<ListNode*, ListNode*> result = Reverse(head, tail);
+            head = result.first;
+            tail = result.second;
+            pre->next = head;
+            tail->next = next;
+            pre = tail;             // 当前链表尾
+            head = tail->next;      // 更新head
+        }
+        return dummy->next;
+    }
+};
+```
+
+### 随机链表的复制
+
+难度：Medium
+
+[138. 随机链表的复制](https://leetcode.cn/problems/copy-list-with-random-pointer/description/?envType=study-plan-v2&envId=top-100-liked)
+
+实现链表（比正常链表多一个随机节点）的**深拷贝**。
+
+毫无思路，正解是哈希表。由于`next`和`random`实际都是指向自己的（某个节点），因此深拷贝只需要申请一次链表空间。1）先建立`拷贝前节点->拷贝后节点`的映射，申请空间；2）参考拷贝前链表，还原拷贝后链表的`next`和`random`。值得学习。
+
+```cpp
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(head == nullptr) return nullptr;
+        Node* cur = head;
+        unordered_map<Node*, Node*> map;
+        /* 建立拷贝前节点->拷贝后节点的映射，申请空间 */
+        while(cur != nullptr) {
+            map[cur] = new Node(cur->val);
+            cur = cur->next;
+        }
+        cur = head;
+        /* 参考拷贝前链表，还原next和random */
+        while(cur != nullptr) {
+            map[cur]->next = map[cur->next];
+            map[cur]->random = map[cur->random];
+            cur = cur->next;
+        }
+        return map[head];
+    }
+};
+```
+
+### 排序链表
+
+难度：Medium
+
+[148. 排序链表](https://leetcode.cn/problems/sort-list/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定链表，升序排序后并返回排序后的链表。
+
+数组暂存一下然后快排，跳过。但是要$\Theta(1)$的空间复杂度还是有点难度的。
+
+### 合并K个升序链表
+
+难度：Hard
+
+[23. 合并K个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个链表数组，每个链表都按升序排序，将所有链表合并到一个升序链表。
+
+```cpp
+
+```
+
 ## 二叉树
 
 ### 二叉树的中序遍历
