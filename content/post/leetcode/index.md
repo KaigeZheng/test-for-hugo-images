@@ -1230,8 +1230,159 @@ public:
 
 给定一个链表数组，每个链表都按升序排序，将所有链表合并到一个升序链表。
 
-```cpp
+别看到Hard就怕了，大问题拆小问题，用一个变量`ans`来维护已经合并的链表，第`i`次循环把第`i`个链表和`ans`合并并保存。那就只需要写一个合并两个链表的函数，时间复杂度$\Theta(k^2n)$，空间复杂度$\Theta(1)$。
 
+```cpp
+class Solution {
+    ListNode* merge(ListNode* a, ListNode* b) {
+        if(!a || !b) return a ? a : b;
+        ListNode head, *tail = &head;
+        ListNode *aPtr = a, *bPtr = b;
+        while(aPtr && bPtr) {
+            if(aPtr->val < bPtr->val) {
+                tail->next = aPtr; aPtr = aPtr->next;
+            } else {
+                tail->next = bPtr; bPtr = bPtr->next;
+            }
+            tail = tail->next;
+        }
+        /* 最后接一次即可，后面的链表继续 */
+        tail->next = (aPtr ? aPtr : bPtr);
+        return head.next;
+    }
+public:
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        ListNode *ans = nullptr;
+        for(size_t i = 0; i < lists.size(); ++i) {
+            ans = merge(ans, lists[i]);
+        }
+        return ans;
+    }
+};
+```
+
+### LRU缓存
+
+难度：Medium
+
+[146. LRU缓存](https://leetcode.cn/problems/lru-cache/description/?envType=study-plan-v2&envId=top-100-liked)
+
+设计并实现一个满足**LRU（最近最少使用）缓存**
+
++ `LRUCache(int capacity)`以**正整数**作为容量`capacity`初始化LRU缓存
+
++ `int get(int key)`如果关键字`key`存在于缓存中，则返回关键字的值，否则返回`-1`
+
++ `void put(int key, int value)`如果关键字`key`已存在则变更其数据值`value`；如果不存在则向缓存中插入该组`key-value`。如果插入操作导致关键字数量超过`capacity`，则应该逐出最久未使用的关键字。
+
+函数`get`和`pu`必须以`\Theta(1)`的平均时间复杂度运行。
+
+```cpp
+# template
+class LRUCache {
+public:
+    LRUCache(int capacity) {
+        
+    }
+    
+    int get(int key) {
+        
+    }
+    
+    void put(int key, int value) {
+        
+    }
+};
+
+/**
+ * Your LRUCache object will be instantiated and called as such:
+ * LRUCache* obj = new LRUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */
+```
+
+如果只要简单的实现的话确实不难，但是要`\Theta(1)`的平均时间复杂度。使用
+
+```cpp
+class LRUCache {
+    struct CacheLine{
+        int key, value;
+        CacheLine *prev, *next;
+        CacheLine(): key(0), value(0), prev(nullptr), next(nullptr) {}
+        CacheLine(int _key, int _value): key(_key), value(_value), prev(nullptr), next(nullptr) {}
+    };
+
+    unordered_map<int, CacheLine*> cache_hash;
+    CacheLine *head, *tail;
+    int size;
+    int capacity;
+public:
+    LRUCache(int capacity) {
+        /* 使用伪头节点和尾节点 */
+        head = new CacheLine();
+        tail = new CacheLine();
+        head->next = tail;
+        tail->prev = head;  
+        size = 0;
+        this->capacity = capacity;      
+    }
+    
+    int get(int key) {
+        if(!cache_hash.count(key)) {
+            return -1;
+        }
+        CacheLine* line = cache_hash[key];
+        moveToHead(line);
+        return line->value;
+    }
+    
+    void put(int key, int value) {
+        if(!cache_hash.count(key)) { // 不在缓存中
+            CacheLine* line = new CacheLine(key, value);
+            cache_hash[key] = line;
+            addToHead(line);
+            ++size;
+            if(size > capacity) {
+                CacheLine* removed = removeTail();
+                cache_hash.erase(removed->key);
+                delete removed;
+                --size;
+            }
+        } else { // 在缓存中
+            CacheLine* line = cache_hash[key];
+            line->value = value;
+            moveToHead(line);
+        }
+    }
+
+    void addToHead(CacheLine* line) {
+        /* 将line添加到链表头 */
+        line->prev = head;
+        line->next = head->next;
+        head->next->prev = line;
+        head->next = line;
+    }
+
+    void removeLine(CacheLine *line) {
+        /* 将line移除(暂时) */
+        line->prev->next = line->next;
+        line->next->prev = line->prev;
+    }
+
+    void moveToHead(CacheLine *line) {
+        /* 将line移动到链表头 */
+        removeLine(line);
+        addToHead(line);
+    }
+
+    CacheLine* removeTail() {
+        /* 将链表尾元素删除 */
+        CacheLine* line = tail->prev;
+        removeLine(line);
+        return line;
+    }
+};
 ```
 
 ## 二叉树
@@ -2587,6 +2738,122 @@ public:
 
 ## 栈
 
+### 有效的括号
+
+难度：Easy
+
+[20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定只含`(){}[]`的字符串，判断是否有效。
+
+使用栈，边塞边判断，当前如果是`)}]`时就和栈顶元素判断是否匹配。代码值得学习。
+
+```cpp
+class Solution {
+public:
+    bool isValid(string s) {
+        int n = s.size();
+        if(n % 2 == 1) return false;
+
+        unordered_map<char, char> pairs = {
+            {')', '('},
+            {'}', '{'},
+            {']', '['}
+        };
+
+        stack<char> str;
+        for(const char &ch : s) {
+            if(pairs.count(ch)) {
+                if(str.empty() || str.top() != pairs[ch]) return false;
+                str.pop();
+            } else {
+                str.push(ch);
+            }
+        }
+        return str.empty();
+    }
+};
+```
+
+### 最小栈
+
+难度：Medium
+
+[155. 最小栈](https://leetcode.cn/problems/min-stack/?envType=study-plan-v2&envId=top-100-liked)
+
+设计一个支持`push`，`pop`，`top`操作，并能在常熟时间内检索到最小元素的栈。
+
+使用一个辅助栈，当元素入栈时将**当前**栈的最小值存储起来。很新颖的题，看完题解后发现很简单。核心在于元素入栈的时候，让辅助栈入栈当前最小值（`min(min_stack.top(), val)`。
+
+```cpp
+class MinStack {
+    stack<int> x_stack;
+    stack<int> min_stack;
+public:
+    MinStack() {
+        min_stack.push(INT_MAX);
+    }
+    
+    void push(int val) {
+        x_stack.push(val);
+        min_stack.push(min(min_stack.top(), val));
+    }
+    
+    void pop() {
+        x_stack.pop();
+        min_stack.pop();
+    }
+    
+    int top() {
+        return x_stack.top();
+    }
+    
+    int getMin() {
+        return min_stack.top();
+    }
+};
+```
+
+### 字符串解码
+
+难度：Medium
+
+[394. 字符串解码](https://leetcode.cn/problems/decode-string/?envType=study-plan-v2&envId=top-100-liked)
+
+对给定字符串进行解码，编码规则为`k[encoded_string]`，表示方括号内部的字符串正好重复`k`次（`k==0`时省略`k`）。
+
+如果不存在嵌套编码的话，简单模拟一下即可，但是只能通过大概一半的样例。由于存在内嵌套括号，需要**从内向外**生成拼接字符串（类似乘法分配律），因此需要用到栈。正解是使用两个辅助栈，遇到`[`时，将当前的数字和字符串都入栈并清零，遇到`]`时将当前的数字栈栈顶元素个数的字符串加入字符串栈顶（有点绕），然后同时出栈一个元素。
+
+```cpp
+class Solution {
+public:
+    string decodeString(string s) {
+        string ans = "";
+        stack<int> nums;
+        stack<string> strs;
+        int num = 0;
+        for(int i = 0; i < s.size(); ++i) {
+            if(s[i] >= '0' && s[i] <= '9') {
+                num = num * 10 + s[i] - '0';
+            } else if((s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z')) {
+                ans = ans + s[i];
+            } else if(s[i] == '[') { // 将[前的数字压入nums栈内，字母压入strs栈内->暂存
+                nums.push(num);
+                num = 0;
+                strs.push(ans);
+                ans = "";
+            } else if(s[i] == ']') { // 与前一个[匹配
+                for(int j = 0; j < nums.top(); ++j) strs.top() += ans; // 很妙的一行
+                ans = strs.top();
+                nums.pop();
+                strs.pop();
+            }
+        }
+        return ans;
+    }
+};
+```
+
 ### 每日温度（栈）
 
 难度：Medium
@@ -2617,6 +2884,88 @@ public:
         return ans;
     }
 };
+```
+
+### 柱状图中最大的矩形
+
+难度：Hard
+
+[84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/?envType=study-plan-v2&envId=top-100-liked)
+
+给定`n`个非负整数作为柱状图高度，宽度为1，求最大矩形面积。（题面感觉和接雨水很像）
+
+单调（递减）栈，
+
++ 性质：栈内的元素是递增的，即1）当元素出栈时，说明新元素是出栈元素向**后**找的第一个更小的元素；2）当元素出栈后，说明栈顶元素是出栈元素向**前**找的第一个更小元素
+
++ 模板：
+
+```cpp
+stack<int> st;
+for(int i = 0; i < nums.size(); ++i) {
+    while(!st.empty() && st.top() > nums[i]) st.pop();
+    st.push(nums[i]);
+}
+```
+
+对于一个高度，如果能得到向左和向右的边界，那么就能对每个高度求一次面积，遍历所有高度即可得出最大面积。使用单调栈，在出栈时得到前后（自己）边界并计算面积。代码值得学习与深思。
+
+```cpp
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        stack<int> st; // 存储索引
+        int ans = heights[0];
+        heights.push_back(0); // 避免输入递增的情况
+        for(int i = 0; i < heights.size(); ++i) {
+            // 遇到了更矮的柱子，就一直出栈直到碰到了较高的
+            while(!st.empty() && heights[st.top()] >= heights[i]) {
+                int h = heights[st.top()];
+                st.pop();
+                if(st.empty()) ans = max(ans, i * h);           // 前面所有柱子都更高
+                else ans = max(ans, (i - st.top() - 1) * h);    // 宽度为和栈顶索引值的距离
+            }
+            st.push(i);
+        }
+        return ans;        
+    }
+};
+```
+
+## 堆
+
+### 数组中的第K个最大元素（排序）
+
+难度：Medium
+
+[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
+
+顾名思义，用algorithm库的快排，两行代码秒了...
+
+```cpp
+class Solution {
+public:
+    int findKthLargest(vector<int>& nums, int k) {
+        sort(nums.begin(), nums.end());
+        return nums[nums.size() - k];
+    }
+};
+```
+
+手搓快排：
+
+```cpp
+int quickselect(vector<int> &nums, int l, int r, int k) {
+    if (l == r) return nums[k];
+    int partition = nums[l], i = l - 1, j = r + 1;
+    while (i < j) {
+        do i++; while (nums[i] < partition);
+        do j--; while (nums[j] > partition);
+        if (i < j) swap(nums[i], nums[j]);
+        }
+        if (k <= j)return quickselect(nums, l, j, k);
+        else return quickselect(nums, j + 1, r, k);
+}
 ```
 
 ## 贪心算法
@@ -2769,42 +3118,6 @@ public:
         return ans * ans; // return square
     }
 };
-```
-
-## 堆
-
-### 数组中的第K个最大元素（排序）
-
-难度：Medium
-
-[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
-
-顾名思义，用algorithm库的快排，两行代码秒了...
-
-```cpp
-class Solution {
-public:
-    int findKthLargest(vector<int>& nums, int k) {
-        sort(nums.begin(), nums.end());
-        return nums[nums.size() - k];
-    }
-};
-```
-
-手搓快排：
-
-```cpp
-int quickselect(vector<int> &nums, int l, int r, int k) {
-    if (l == r) return nums[k];
-    int partition = nums[l], i = l - 1, j = r + 1;
-    while (i < j) {
-        do i++; while (nums[i] < partition);
-        do j--; while (nums[j] > partition);
-        if (i < j) swap(nums[i], nums[j]);
-        }
-        if (k <= j)return quickselect(nums, l, j, k);
-        else return quickselect(nums, j + 1, r, k);
-}
 ```
 
 ## 动态规划
