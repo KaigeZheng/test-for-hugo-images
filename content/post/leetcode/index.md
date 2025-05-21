@@ -466,6 +466,49 @@ public:
 };
 ```
 
+### 最小覆盖子串
+
+难度：Hard
+
+[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串`s`和`t`，返回`s`中涵盖`t`所有字符的最小子串或空。
+
+官解写得太难看懂了，终于找到了一个可以看懂的代码。使用滑动窗口+哈希表，在滑动时维护哈希表和计数器`cnt`，代码值得学习。
+
+```cpp
+class Solution {
+public:
+    string minWindow(string s, string t) {
+        int n = s.size(), m = t.size();
+        if(n < m) return "";
+        vector<int> cnt(128, 0);
+        for(const char &x : t) cnt[x]++;
+        int l = 0, cntC = m, ansL = 0, ansR = n + 1;
+        for(int r = 0; r < n; r++) {
+            // 如何出现过则计数器减一
+            if(cnt[s[r]] > 0) cntC--;
+            // 当前字符在计数器中减一
+            cnt[s[r]]--;
+            // 如果左指针元素可以不出现，则右移
+            while(cnt[s[l]] < 0) {
+                cnt[s[l]]++;
+                l++;
+            }
+            // 如果计数器为0说明找到了一个包含t的子串
+            if(cntC == 0) {
+                if(r - l < ansR - ansL) ansL = l, ansR = r;
+                // 左指针右移，继续滑动
+                cnt[s[l]]++;
+                l++;
+                cntC++;
+            }
+        }
+        return ansR == n + 1 ? "" : s.substr(ansL, ansR - ansL + 1);
+    }
+};
+```
+
 ## 普通数组
 
 ### 最大子数组和
@@ -1895,7 +1938,29 @@ public:
 
 [236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
 
-还没太掌握递归的LCA，暂且放置。
+给定一个二叉树，找到该树中两个指定节点`p`和`q`的最近公共祖先。
+
+参考[题解](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/solutions/24970/236-er-cha-shu-de-zui-jin-gong-gong-zu-xian-jian-j/?envType=study-plan-v2&envId=top-100-liked)，`p`和`q`的情况分为两种：1）`p`和`q`在相同子树中；2）`p`和`q`在不同子树中。从根节点向左右节点递归（递归出口：空/`p`/`q`，返回当前节点）。
+
++ 递归遍历左右子树，如果都不为空，那么`p`和`q`分别在左右子树中，因此当前节点为LCA
+
++ 如果左右子树其中一个不为空，则返回非空节点
+
+代码很简洁，得再思考思考。
+
+```cpp
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(!root || root == p || root == q) return root;
+        TreeNode *left = lowestCommonAncestor(root->left, p, q);
+        TreeNode *right = lowestCommonAncestor(root->right, p, q);
+        // 在不同子树时返回root
+        if(left && right) return root;
+        return left ? left : right;
+    }
+};
+```
 
 ### 二叉树中的最大路径和
 
@@ -2730,11 +2795,57 @@ public:
 
 [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/description/?envType=study-plan-v2&envId=top-100-liked)
 
-给定两个大小分别为$m$和$n$的正序数组，以$\Theta(log(m+n))$返回两个正序数组的中位数，
+给定两个大小分别为$m$和$n$的正序数组，以$\Theta(log(m+n))$返回两个正序数组的中位数。（要求时间复杂度为$\Theta(log(m+n))$）
 
-已知数组长度，最直观的思路是维护双指针，以$\Theta(1)$的空间复杂度和$\Theta(n+m)$的时间复杂度寻找中位数。
+难，不会写...
 
-不会写，先搁置。
+```cpp
+class Solution {
+public:
+    int getKthElement(const vector<int>& nums1, const vector<int>& nums2, int k) {
+        int m = nums1.size();
+        int n = nums2.size();
+        int index1 = 0, index2 = 0;
+
+        while (true) {
+            // 边界情况
+            if (index1 == m) {
+                return nums2[index2 + k - 1];
+            }
+            if (index2 == n) {
+                return nums1[index1 + k - 1];
+            }
+            if (k == 1) {
+                return min(nums1[index1], nums2[index2]);
+            }
+
+            // 正常情况
+            int newIndex1 = min(index1 + k / 2 - 1, m - 1);
+            int newIndex2 = min(index2 + k / 2 - 1, n - 1);
+            int pivot1 = nums1[newIndex1];
+            int pivot2 = nums2[newIndex2];
+            if (pivot1 <= pivot2) {
+                k -= newIndex1 - index1 + 1;
+                index1 = newIndex1 + 1;
+            }
+            else {
+                k -= newIndex2 - index2 + 1;
+                index2 = newIndex2 + 1;
+            }
+        }
+    }
+
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int totalLength = nums1.size() + nums2.size();
+        if (totalLength % 2 == 1) {
+            return getKthElement(nums1, nums2, (totalLength + 1) / 2);
+        }
+        else {
+            return (getKthElement(nums1, nums2, totalLength / 2) + getKthElement(nums1, nums2, totalLength / 2 + 1)) / 2.0;
+        }
+    }
+};
+```
 
 ## 栈
 
@@ -2952,7 +3063,7 @@ public:
 };
 ```
 
-手搓快排：
+手搓快排（重要）：
 
 ```cpp
 int quickselect(vector<int> &nums, int l, int r, int k) {
@@ -2966,6 +3077,92 @@ int quickselect(vector<int> &nums, int l, int r, int k) {
         if (k <= j)return quickselect(nums, l, j, k);
         else return quickselect(nums, j + 1, r, k);
 }
+```
+
+### 前K个高频元素
+
+难度：Medium
+
+[347. 前K个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数数组和整数`k`，按任意顺序返回出现频率前`k`高的元素（要求时间复杂度优于$\Theta(nlogn)$）。
+
+用数组记录出现频次然后排序，但是复杂度会达到$\Theta(nlogn)$。因此可以设计一个小顶堆（用[优先队列](https://leetcode.cn/problems/top-k-frequent-elements/solutions/1283998/c-xiao-bai-you-hao-you-xian-dui-lie-de-j-53ay/?envType=study-plan-v2&envId=top-100-liked)实现，代码值得学习），然后遍历出现频次数组：
+
++ 如果堆的元素小于`k`，则直接插入堆中
+
++ 如果堆的元素大于`k`，则检查堆顶与当前出现次数的大小。如果堆顶更大，说明至少有`k`个数字的出现次数比当前值大，故舍弃；否则就弹出堆顶，将当前值插入。
+
+```cpp
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int, int> freq;
+        for(const int& x : nums) ++freq[x];
+        /* 自定义比较方式 */
+        struct cmp{
+            bool operator()(pair<int, int>& x, pair<int, int>& y) {
+                return x.second > y.second;
+            }
+        };
+        priority_queue<pair<int, int>, vector<pair<int, int>>, cmp> q;
+        for(auto & x : freq) {
+            q.push(x);
+            if(q.size() > k) q.pop(); // 小顶堆: 栈顶元素一定是最小的>
+        }
+        vector<int> ans;
+        while(!q.empty()) {
+            ans.emplace_back(q.top().first);
+            q.pop();
+        }
+        return ans;
+    }
+};
+```
+
+### 数据流的中位数
+
+难度：Hard
+
+实现MedianFinder类：
+
++ `MedianFinder()`初始化`MedianFinder`对象
+
++ `void addNum(int num)`将数据流中的整数`num`添加到数据结构中
+
++ `double findMedian()`返回到目前位置所有元素的中位数。与实际答案相差$10^{-5}$以内的答案将被接受。
+
+初见能想到（部分）正解思路（用一个大顶堆和一个小顶堆），不过没敢写。用两个优先队列`maxHeap`和`minHeap`分别记录小于中位数的数和大于等于中位数的数。当累计添加的数的数量为奇数时，`minHeap`中的数比`maxHeap`多一个，此时中位数为`minHeap`的堆顶。代码还得再看看。
+
+```cpp
+class MedianFinder {
+    priority_queue<int, vector<int>, less<int>> minHeap;
+    priority_queue<int, vector<int>, greater<int>> maxHeap;
+public:
+    MedianFinder() { }
+    
+    void addNum(int num) {
+        // 小于中位数，中位数将变小
+        if(minHeap.empty() || num <= minHeap.top()) {
+            minHeap.push(num);
+            if(maxHeap.size() + 1 < minHeap.size()) {
+                maxHeap.push(minHeap.top());
+                minHeap.pop();
+            }
+        } else { // 大于中位数，中位数将变大
+            maxHeap.push(num);
+            if(maxHeap.size() > minHeap.size()) {
+                minHeap.push(maxHeap.top());
+                maxHeap.pop();
+            }
+        }
+    }
+    
+    double findMedian() {
+        if(minHeap.size() > maxHeap.size()) return minHeap.top();
+        return (minHeap.top() + maxHeap.top()) / 2.0;
+    }
+};
 ```
 
 ## 贪心算法
