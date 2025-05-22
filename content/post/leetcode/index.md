@@ -14,7 +14,15 @@ tags:
 weight: 10
 ---
 
-[leetcode top 100](https://leetcode.cn/studyplan/top-100-liked/)
+## 前言
+
+前言写于`2025/05/22 23:58`，在一刻钟前我刚完成hot 100题单。突然感慨于身为计算机科班学生与算法（这里仅指传统算法，非AI/ML算法）的孽缘，从高考后向往ACM学习C/C++和[紫书](https://book.douban.com/subject/25902102/)~~（被紫书摧残）~~，大一开始为成为ACMer而日刷洛谷夜刷codeforces，到大二认清现实放弃ACM，却因离不开算法而浅读《算法导论》，到大三为找回感觉和准备机试而速通leetcode hot 100...不知未来如何，起码本科的每个阶段都离不开算法（可惜咱算法水平一般）。本篇博文用于记录我从3月6日开始到今天写hot 100的过程。
+
+![从3月6日到5月22日的提交记录](img/1.png)
+
+---
+
+[leetcode hop 100](https://leetcode.cn/studyplan/top-100-liked/)
 
 ## 哈希
 
