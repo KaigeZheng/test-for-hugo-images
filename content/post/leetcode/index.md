@@ -2,7 +2,7 @@
 title: LeetCode刷题记录
 description: 记录一下刷leetcode hot100的过程
 slug: leetcode
-date: 2025-03-23 14:54:00+0800
+date: 2025-05-22 23:43:00+0800
 math: true
 image: img/cover.png
 categories:
@@ -3422,36 +3422,7 @@ public:
 };
 ```
 
-## 多维动态规划
-
-### 不同路径
-
-难度：Medium
-
-[62. 不同路径](https://leetcode.cn/problems/unique-paths/description/?envType=study-plan-v2&envId=top-100-liked)
-
-从网格的左上移动到坐下共有多少条不同路径。
-
-dp板子题，秒了。可以优化为一维数组（完全背包）：计算$dp[1][1]$时，会使用到$dp[0][1]$和$dp[1][0]$，但是$dp[0][1]$之后就不用了，那就干脆直接把$dp[1][1]$记到$dp[0][1]$中。
-
-排列组合也能算，但还是算了。
-
-```cpp
-class Solution {
-public:
-    int uniquePaths(int m, int n) {
-        int dp[105][105];
-        for(int i = 0; i < m; ++i) dp[i][0] = 1;
-        for(int i = 1; i < n; ++i) dp[0][i] = 1;
-        for(int i = 1; i < m; ++i) {
-            for(int j = 1; j < n; ++j) {
-                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
-            }
-        }
-        return dp[m - 1][n - 1];
-    }
-};
-```
+## 动态规划
 
 ### 完全平方数
 
@@ -3505,6 +3476,376 @@ public:
             }
         }
         return dp[amount] == 0x3f3f3f? -1 : dp[amount];
+    }
+};
+```
+
+### 单词拆分
+
+难度：Medium
+
+[139. 单词拆分](https://leetcode.cn/problems/word-break/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串和字符串列表作为字典，如果可以利用字典中出现的一个或多个单词拼接出字符串则返回true。
+
+$dp[i] (i \in [0, n])$表示前$i$位是否可以用`wordDict`中的单词表示，并初始化$dp[0] = true$。遍历字符串的所有子串，对于区间$[l, r]$，如果$dp[l] = true$即$l$左边的部分可以用字典标识，且`s.substr(l, r - l)`的部分出现在字典中时，那么$r$左边的部分都可以用字典表示，因此$dp[r] = true$，即状态转移方程$dp[r] = dp[l] && check(l, r)$的
+
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        int n = s.size();
+        unordered_set<string> words(wordDict.begin(), wordDict.end());
+        vector<bool> dp(n + 1, false);
+        dp[0] = true;
+        for(int r = 1; r <= n; ++r) {
+            for(int l = 0; l < r; ++l) {
+                if(dp[l] && words.find(s.substr(l, r - l)) != words.end()) {
+                    dp[r] = true;
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+### 最长递增子序列（LIS）
+
+难度：Medium
+
+[300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数数组，找到最长严格递增**子序列**的长度。
+
+$dp[i]$表示只考虑前$i$个元素，以第$i$个数字结尾的LIS长度（**nums[i]**必须被选取）。状态转移方程为$dp[i] = max(dp[j]) + 1$。
+
+```cpp
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n = nums.size();
+        if(!n) return 0;
+        vector<int> dp(n, 0);
+        for(int i = 0; i < n; ++i) {
+            dp[i] = 1;
+            for(int j = 0; j < i; ++j) {
+                if(nums[j] < nums[i]) dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+        return *max_element(dp.begin(), dp.end());
+    }
+};
+```
+
+### 乘积最大子数组
+
+难度：Medium
+
+[152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/?envType=study-plan-v2&envId=top-100-liked)
+
+给定整数数组，找出数组中乘积最大的非空连续子数组，并返回乘积。
+
+跟上一题类似地能写出来，但是有bug，因为没有正确地考虑序列的整体正负情况！
+
+```cpp
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        vector<long> maxF(nums.begin(), nums.end()), minF(nums.begin(), nums.end());
+        for(int i = 1; i < nums.size(); ++i) {
+            maxF[i] = max(maxF[i - 1] * nums[i], max((long)nums[i], minF[i - 1] * nums[i]));
+            minF[i] = min(minF[i - 1] * nums[i], min((long)nums[i], maxF[i - 1] * nums[i]));
+        }
+        return *max_element(maxF.begin(), maxF.end());
+    }
+};
+```
+
+### 分割等和子集
+
+难度：Medium
+
+[416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个只包含正整数的非空数组，判断是否将这个数组分割成两个**子集**，使得两个子集的元素和相等。
+
+完全没有思路的一题。题面等价于“给定数组判断是否可以选出一些数字使和等于整个数组元素和的一半”（0-1背包问题）。限制条件不在于重量不超背包总容量，而是和恰好等于元素和的一半。
+
+有三种情况可以直接排除：1）`n % 2 == 1`；2）`sum % 2 == 1`；3）$maxElement > \frac{sum}{2}$。
+
+创建$n$行$\frac{sum}{2} + 1$列的二维数组，$dp[i][j]$表示从下标$[0, i]$范围内选取若干个正整数是否存在和等于$j$。初始化：$dp[i][0] = true$；$dp[0][nums[0]] = true$（当$i == 0$时，只有$nums[0]$可选）。
+
+接下来考虑状态转移方程
+
++ 如果$j \ge nums[i]$，那么$nums[i]$可选可不选，考虑以下两种情况：1）如果不选，那么$dp[i][j] = dp[i - 1][j]$；如果选取，那么$dp[i][j] = dp[i - 1][j - nums[i]]。
+
++ 如果$j \lt nums[i]$，那么无法选取，$dp[i][j] = dp[i - 1][j]。
+
+综上，得到状态转移方程：
+
+$$dp[i][j]=\begin{cases}dp[i-1][j] || dp[i-1][j-nums[i]]\ (j \ge nums[i])\\dp[i-1][j]\ (j \lt nums[i])\end{cases}$$
+
+```cpp
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int n = nums.size();
+        /* 排除三种情况 */
+        if(n < 2) return false;             // 1.1
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        int maxNum = *max_element(nums.begin(), nums.end());
+        if(sum & 1) return false;           // 1.2
+        int target = sum / 2;
+        if(maxNum > target) return false;   // 1.3
+
+        vector<vector<int>> dp(n, vector<int>(target + 1, 0));
+        /* 初始化 */
+        for(int i = 0; i < n; ++i) dp[i][0];// 2.1
+        dp[0][nums[0]] = true;              // 2.2
+        /* 动态规划 */
+        for(int i = 1; i < n; ++i) {
+            int num = nums[i];
+            for(int j = 1; j <= target; ++j) {
+                if(j >= num) {
+                    dp[i][j] = dp[i - 1][j] || dp[i - 1][j - num];
+                } else {
+                    dp[i][j] = dp[i - 1][j];
+                }
+            }
+        }
+        return dp[n - 1][target];
+    }
+};
+```
+
+### 最长有效括号
+
+难度：Hard
+
+[32. 最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定值包含`(`和`)`的字符串，找出最长有效括号**子串**的长度。
+
+Solution 1（栈）：始终保持栈**底**元素为当前已遍历过的元素中**最后一个没有被匹配的右括号的下标**，栈里其他元素维护左括号下标：
+
++ 遇到`(`则将下标放入栈中
+
++ 遇到`)`则需要出栈并考虑两种情况：1）如果栈空，那么当前`)`为没有被匹配的`)`，将下标入栈；2）如果栈不空，`i - stk.top()`表示以该右括号结尾的最长有效括号长度
+
+```cpp
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int ans = 0;
+        stack<int> stk;
+        stk.push(-1);
+        for(int i = 0; i < s.size(); ++i) {
+            if(s[i] == '(') {
+                stk.push(i);
+            } else if(s[i] == ')') {
+                stk.pop();
+                if(stk.empty()) stk.push(i);
+                else ans = max(ans, i - stk.top());
+            }
+        }
+        return ans;
+    }
+};
+```
+
+Solution 2（DP）：定义$dp[i]$表示以下标$i$结尾的最长有效括号长度。显然有效的子串一定以`)`结尾，因此以`(`结尾的子串对应$dp$值为0。从前往后遍历字符串求解$dp$，每两字符检查一次：
+
++ 形如`...()`，那么$dp[i] = dp[i - 2] + 2$
+
++ 形如`...))`，那么$dp[i] = dp[i - 1] + dp[i - dp[i - 1] - 2] + 2$（$i$位置匹配的左括号在$i - dp[i - 1] - 1$，这里有点懵...）
+
+```cpp
+# 不会但是抄一下官解
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int ans = 0, n = s.size();
+        vector<int> dp(n, 0);
+        for(int i = 1; i < n; ++i) {
+            if(s[i] == ')') {
+                if(s[i - 1] == '(') {
+                    dp[i] = (i >= 2 ? dp[i - 2] : 0) + 2;
+                } else if (i - dp[i - 1] > 0 && s[i - dp[i - 1] - 1] == '(') {
+                    dp[i] = dp[i - 1] + ((i - dp[i - 1]) >= 2 ? dp[i - dp[i - 1] - 2] : 0) + 2;
+                }
+                ans = max(ans, dp[i]);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+## 多维动态规划
+
+### 不同路径
+
+难度：Medium
+
+[62. 不同路径](https://leetcode.cn/problems/unique-paths/description/?envType=study-plan-v2&envId=top-100-liked)
+
+从网格的左上移动到坐下共有多少条不同路径。
+
+dp板子题，秒了。可以优化为一维数组（完全背包）：计算$dp[1][1]$时，会使用到$dp[0][1]$和$dp[1][0]$，但是$dp[0][1]$之后就不用了，那就干脆直接把$dp[1][1]$记到$dp[0][1]$中。
+
+排列组合也能算，但还是算了。
+
+```cpp
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        int dp[105][105];
+        for(int i = 0; i < m; ++i) dp[i][0] = 1;
+        for(int i = 1; i < n; ++i) dp[0][i] = 1;
+        for(int i = 1; i < m; ++i) {
+            for(int j = 1; j < n; ++j) {
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+            }
+        }
+        return dp[m - 1][n - 1];
+    }
+};
+```
+
+### 最小路径和
+
+难度：Medium
+
+[64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定包含非负整数的mxn网格，找到一条从左上角到右虾饺的路径使路径上的数字综合为最小（只能向下或向右移动一步）。
+
+很标准的写法，注意一下细节即可。
+
+```cpp
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        vector<vector<int>> dp(m, vector<int>(n, 0));
+        dp[0][0] = grid[0][0];
+        for(int i = 1; i < m; ++i) dp[i][0] = dp[i - 1][0] + grid[i][0];
+        for(int i = 1; i < n; ++i) dp[0][i] = dp[0][i - 1] + grid[0][i];
+        for(int i = 1; i < m; ++i) {
+            for(int j = 1; j < n; ++j) {
+                dp[i][j] = grid[i][j] + min(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+        return dp[m - 1][n - 1];
+    }
+};
+```
+
+### 最长回文子串（LPS）
+
+难度：Medium
+
+[5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定字符串，求最长回文子串。
+
+定义$P(i, j) = true\ if\ S_{i}...S_{j}是回文串\ else\ false$，且如果一个子串是回文串，那么去掉首尾字母仍是回文串。那么得到状态转移方程$P(i, j) = P(i + 1, j - 1) \wedge (S_{i} == S_{j})$（向外扩展）。同时注意两个初始化条件：1）$P(i, i) = true$；2）$P(i, i + 1) = (S_{i} == S_{j})$。有点难...
+
+```cpp
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int n = s.size(); if(n < 2) return s;
+        int maxLen = 1, begin = 0;          // 记录子串
+        vector<vector<bool>> dp(n, vector<bool>(n));
+        for(int i = 0; i < n; ++i) dp[i][i] = true;
+        
+        for(int L = 2; L <= n; ++L) {
+            for(int i = 0; i < n; ++i) {    // 长度
+                int j = L + i - 1;          // 右边界
+                if(j >= n) break;           // 越界
+                if(s[i] != s[j]) dp[i][j] = false;
+                else {
+                    if(j - i < 3) dp[i][j] = true;
+                    else dp[i][j] = dp[i + 1][j - 1];
+                }
+                if(dp[i][j] && j - i + 1 > maxLen) maxLen = j - i + 1, begin = i;
+            }
+        }
+        return s.substr(begin, maxLen);
+    }
+};
+```
+
+### 最长公共子序列（LCS）
+
+给定两个字符串，求最长公共子序列的长度。
+
+> 死去的记忆又在攻击我...`2023/06/02 21:58`在OneNote写下的LCS笔记依旧。
+
+定义$dp[i][j]$表示序列$S1[0:i]$和序列$S2[0:j]$的LCS。
+
+考虑两种情况：1）如果序列S1与S2的最后一个元素相等，则S1与S2的LCS就是**S1去尾**与**S2去尾**的LCS加上最后一个元素；2）如果序列S1与S2的最后一个元素不等，那么S1与S2的LCS就是$max(S1去尾与L2的LCS， S2去尾与S1的LCS)$。
+
+那么状态转移方程如下：
+
+$$dp[i][j]=\begin{cases}dp[i-1][j-1] + 1, 尾部相等\\max(dp[i-1][j], dp[i][j-1]), 尾部不相等\end{cases}$$
+
+```cpp
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.size(), n = text2.size();
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1));
+        for(int i = 1; i <= m; ++i) {
+            char c1 = text1.at(i - 1);
+            for(int j = 1; j <= n; ++j) {
+                char c2 = text2.at(j - 1);
+                if(c1 == c2) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                } else {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+### 编辑距离
+
+难度：Medium
+
+[72. 编辑距离](https://leetcode.cn/problems/edit-distance/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定两个单词，求将字符串A转换为字符串B使用的最少操作数（插入、删除、替换）。
+
+如果A为空，那么编辑距离为字符串B的长度；如果B为空，那么编辑距离为字符串A的长度。因此定义$dp[i][j]$表示A的前$i$个字母和$B$的前$j$个字母之间的编辑距离，具体的状态转移建议直接看代码。
+
+```cpp
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int n = word1.size(), m = word2.size();
+        if(n * m == 0) return n + m;    // 其中一个字符串为空
+        vector<vector<int>> dp(n + 1, vector<int>(m + 1));
+        // 边界状态初始化
+        for(int i = 0; i < n + 1; ++i) dp[i][0] = i;
+        for(int j = 0; j < m + 1; ++j) dp[0][j] = j;
+
+        for(int i = 1; i < n + 1; ++i) {
+            for(int j = 1; j < m + 1; ++j) {
+                // 三种状态转移方式
+                int left = dp[i - 1][j] + 1;
+                int down = dp[i][j - 1] + 1;
+                int left_down = dp[i - 1][j - 1]; if(word1[i - 1] != word2[j - 1]) left_down += 1;
+                dp[i][j] = min(left, min(down, left_down));
+            }
+        }
+        return dp[n][m];
     }
 };
 ```
