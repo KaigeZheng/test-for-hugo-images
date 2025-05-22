@@ -789,7 +789,7 @@ public:
 
 难度：Easy
 
-[160. 相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/description/?envType=problem-list-v2&envId=J9S1zwux)(Easy):给两个单链表的头节点，找出并返回两个单链表相交的起始节点。（Note:不是值相等，而是内存空间相等）
+[160. 相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/?envType=study-plan-v2&envId=top-100-liked)(Easy):给两个单链表的头节点，找出并返回两个单链表相交的起始节点。（Note:不是值相等，而是内存空间相等）
 
 #### 哈希集合
 
@@ -848,7 +848,7 @@ public:
 
 难度：Easy
 
-[206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/description/?envType=problem-list-v2&envId=J9S1zwux)
+[206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/?envType=study-plan-v2&envId=top-100-liked)
 
 给一个单链表的头节点`head`，反转链表并返回反转后的链表。
 
@@ -897,7 +897,7 @@ public:
 
 难度：Easy
 
-[234. 回文链表](https://leetcode.cn/problems/palindrome-linked-list/description/?envType=problem-list-v2&envId=J9S1zwux)
+[234. 回文链表](https://leetcode.cn/problems/palindrome-linked-list?envType=study-plan-v2&envId=top-100-liked)
 
 不难，跳过。
 
@@ -1486,7 +1486,7 @@ public:
 
 难度：Easy
 
-[226. 翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
+[226. 翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/?envType=study-plan-v2&envId=top-100-liked)
 
 给一棵二叉树，翻转每一个左右节点，很简单的递归，秒了。
 
@@ -1936,7 +1936,7 @@ public:
 
 难度：Medium
 
-[236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/description/?envType=problem-list-v2&envId=J9S1zwux)
+[236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree?envType=study-plan-v2&envId=top-100-liked)
 
 给定一个二叉树，找到该树中两个指定节点`p`和`q`的最近公共祖先。
 
@@ -2137,7 +2137,7 @@ public:
 
 难度：Medium
 
-[208. 实现Trie（前缀树）](https://leetcode.cn/problems/implement-trie-prefix-tree/?envType=problem-list-v2&envId=J9S1zwux)
+[208. 实现Trie（前缀树）](https://leetcode.cn/problems/implement-trie-prefix-tree?envType=study-plan-v2&envId=top-100-liked)
 
 思路就是多叉树，每个节点映射到26个字母（26叉）。
 
@@ -2969,7 +2969,7 @@ public:
 
 难度：Medium
 
-[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/description/?envType=problem-list-v2&envId=J9S1zwux)
+[739. 每日温度](https://leetcode.cn/problems/daily-temperatures/?envType=study-plan-v2&envId=top-100-liked)
 
 给定一个气温数组，求每个气温遇到下一个更高气温的距离。暴力解法是$\Theta(n^2)$，会TLE，明显会大量重复遍历，考虑一些“记忆化”手段。
 
@@ -3049,7 +3049,7 @@ public:
 
 难度：Medium
 
-[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=problem-list-v2&envId=J9S1zwux)
+[215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/description/?envType=study-plan-v2&envId=top-100-liked)
 
 顾名思义，用algorithm库的快排，两行代码秒了...
 
@@ -3281,7 +3281,7 @@ public:
 
 难度：Medium
 
-[221. 最大正方形](https://leetcode.cn/problems/maximal-square/description/?envType=problem-list-v2&envId=J9S1zwux)
+[221. 最大正方形](https://leetcode.cn/problems/maximal-square/description/?envType=problem-list-v2&envId=J9S1zwux)（此题不在当前hot 100中）
 
 #### DP
 
