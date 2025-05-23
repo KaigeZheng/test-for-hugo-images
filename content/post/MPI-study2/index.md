@@ -11,7 +11,8 @@ categories:
 tags:
     - 技术
     - MPI
-weight: 3
+# weight: 3
+weight: 6
 ---
 
 本文写于`2024-3-19`至`2024-3-24`。

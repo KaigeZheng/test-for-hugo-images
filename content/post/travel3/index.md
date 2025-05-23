@@ -10,7 +10,8 @@ categories:
 tags:
     - 生活
     - 旅行
-weight: 6
+# weight: 6
+weight: 8
 ---
 
 ## 前言

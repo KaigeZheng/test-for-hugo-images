@@ -11,7 +11,8 @@ categories:
 tags:
     - 文档
     - AI Infra
-weight: 11
+# weight: 11
+weight: 4
 ---
 ## Reference
 
@@ -312,7 +313,7 @@ def softmax(x):
 
 ### Blocked Matrix Multiplication
 
-对于一个以$(BLOCK\_SIZE\_M, BLOCK\_SIEZE\_K, BLOCK\_SIZE\_N)$为分块大小的，$(M, K)$和$(K, N)$相乘的分块矩阵乘法如下：
+对于一个以$(BLOCKSIZEM, BLOCKSIZEK, BLOCKSIZEN)$为分块大小的，$(M, K)$和$(K, N)$相乘的分块矩阵乘法如下：
 
 ```python
 # Do in parallel
@@ -333,7 +334,7 @@ for m in range(0, M, BLOCK_SIZE_M):
 
 #### 多维指针
 
-对于行主序的二维张量$X$，$X[i, j]$的内存位置由$\&X[i, j] = X + i * stride\_xi + j * stride\_xj$给出，因此$A[m : m + BLOCK\_SIZE\_M, k : k + BLOCK\_SIZE\_K]$和$B[k : k + BLOCK\_SIZE\_K, n : n + BLOCK\_SIZE\_N]$的指针块可以用伪代码定义为：
+对于行主序的二维张量$X$，$X[i, j]$的内存位置由`&X[i, j] = X + i * stride_xi + j * stride_xj`给出，因此$A[m : m + BLOCKSIZEM, k : k + BLOCKSIZEK]$和$B[k : k + BLOCKSIZEK, n : n + BLOCKSIZEN]$的指针块可以用伪代码定义为：
 
 ```python
 &A[m : m+BLOCK_SIZE_M, k:k+BLOCK_SIZE_K] = a_ptr + (m : m+BLOCK_SIZE_M)[:, None]*A.stride(0) + (k : k+BLOCK_SIZE_K)[None, :]*A.stride(1);  
@@ -365,7 +366,7 @@ b_ptrs += BLOCK_SIZE_K * stride_bk
 
 ### L2 Cache Optimization
 
-对于$N \times N$的矩阵（以$BLOCK\_SIZE\_N$为分块大小），可以通过以下代码将一维的`program_id`线程块索引映射到二维的块索引，从而确定当前program负责计算结果矩阵$C$的哪一块。
+对于$N \times N$的矩阵（以$BLOCKSIZEN$为分块大小），可以通过以下代码将一维的`program_id`线程块索引映射到二维的块索引，从而确定当前program负责计算结果矩阵$C$的哪一块。
 
 ```python
 pid = tl.program_id(axis=0)
@@ -374,7 +375,7 @@ pid_m = pid // grid_n
 pid_n = pid % grid_n
 ```
 
-每个程序实例计算$C$的一个$[BLOCK\_SIZE\_M, BLOCK\_SIZE\_N]$块，简单的行主序排序是行不通的。
+每个程序实例计算$C$的一个$[BLOCKSIZEM, BLOCKSIZEN]$块，简单的行主序排序是行不通的。
 
 可以实现以下的分组（Grouping）优化，目的是为了优化内存访问模式：
 

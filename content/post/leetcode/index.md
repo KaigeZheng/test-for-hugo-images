@@ -2,7 +2,7 @@
 title: LeetCode刷题记录
 description: 记录一下刷leetcode hot100的过程
 slug: leetcode
-date: 2025-05-22 23:43:00+0800
+date: 2025-05-22 23:58:00+0800
 math: true
 image: img/cover.png
 categories:
@@ -11,7 +11,8 @@ categories:
 tags:
     - 文档
     - 算法
-weight: 10
+# weight: 10
+weight: 11
 ---
 
 ## 前言

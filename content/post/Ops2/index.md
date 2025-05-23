@@ -11,7 +11,8 @@ categories:
 tags:
     - 文档
     - 运维
-weight: 10
+# weight: 10
+weight: 3
 ---
 
 本篇博文介绍集群常用版本管理软件MODULES，以及MPI的两种实现（UCX+OpenMPI/MPICH）、Intel oneAPI的安装配置。MODULES（最新版的发行版发布自24年11月）的软件依赖繁琐且modulefile需要用TCL写（可以用生成式AI解决），未来有机会学习一下更易用的spack。
