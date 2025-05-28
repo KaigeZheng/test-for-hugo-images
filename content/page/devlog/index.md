@@ -66,6 +66,8 @@ icon（github、知乎、微信等）来自[tabler icons](https://www.iconfont.c
 
 ## 博文更新日志
 
++ `2025/05/28` 上传了第十三篇博文，[《从Transformer开始探索BERT》](http://kambri.top/p/bert/)，记录了学习BERT的过程。
+
 + `2025/05/11` 上传了第十二篇博文，[《高性能集群运维——软件环境（Modules、MPI、oneAPI）》](http://kambri.top/p/ops2/)，记录了配置软件环境的过程。
 
 + `2025/04/14` 更新了[《Hello World》](http://kambri.top/p/hello-world/)，留下了时隔半年的新随笔。
