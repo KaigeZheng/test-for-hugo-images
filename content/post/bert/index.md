@@ -30,7 +30,7 @@ weight: 2
 
 ### Total Summary
 
-BERT的模型架构完全基于Transformer架构的编码器（Encoder）堆叠（原文使用12层或24层encoder），每个Encoder包括**多头自注意力机制**（MHA，Multi-Head Self-Attention，支持双向上下文理解）、**前馈神经网络**（FFN，Feed-Forward Network，对注意力输出进行非线性变换），**参差连接和层归一化**（Add & Norm，提升训练稳定性）。
+BERT的模型架构完全基于Transformer架构的编码器（Encoder）堆叠（原文使用12层或24层Transformer Layer），每个Encoder包括**多头自注意力机制**（MHA，Multi-Head Self-Attention，支持双向上下文理解）、**前馈神经网络**（FFN，Feed-Forward Network，对注意力输出进行非线性变换），**参差连接和层归一化**（Add & Norm，提升训练稳定性）。
 
 {{< figure src="img/1.png#center" width=400px" title="Transformer Model Architecture">}}
 
