@@ -2,7 +2,7 @@
 title: 从Transformer开始探索BERT
 description: 大模型学习笔记（一）
 slug: llm1
-date: 2025-06-02 22:38:00+0800
+date: 2025-06-02 22:55:00+0800
 math: true
 image: img/cover.png
 categories:
@@ -707,6 +707,8 @@ trainer = Trainer(model=model,
 
 trainer.train()
 ```
+
+{{< figure src="img/11.png#center" width=500px" title="nvtop: 硬件环境是一机八卡Tesla P100 16G">}}
 
 {{< figure src="img/8.png#center" width=400px" title="Model Training">}}
 
