@@ -2,7 +2,7 @@
 title: 从Transformer开始探索BERT
 description: 大模型学习笔记（一）
 slug: llm1
-date: 2025-05-28 23:48:00+0800
+date: 2025-06-02 22:38:00+0800
 math: true
 image: img/cover.png
 categories:
@@ -11,7 +11,6 @@ categories:
 tags:
     - 文档
     - AI Infra
-draft: trues
 weight: 2
 ---
 
@@ -605,6 +604,184 @@ plt.xlabel('')
 
 {{< figure src="img/5.png#center" width=300px" title="标签频率">}}
 {{< figure src="img/6.png#center" width=300px" title="文本长度">}}
+
+#### Text2Tokens
+
+为了后续模型的训练，需要将数据集转换为模型接受的输入类型。对于model，需要关注BERT/DistillBERT使用subword tokenizer；对于tokenizer，需要关注`tokenizer.vocab_size`、`model_max_length`和`model_input_name`几个参数。
+
+```python
+from transformers import AutoTokenizer
+model_ckpt = "/path/to/bert-distill"
+tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
+print(tokenizer.vocab_size, tokenizer.model_max_length, tokenizer.model_input_names)
+# 30522 512 ['input_ids', 'attention_mask']
+
+# 输出一个batch的text， 输出一个batch的tokens
+def batch_tokenize(batch):
+    return tokenizer(batch['text'], padding=True, truncation=True)
+
+emotions_encoded = emotions.map(batch_tokenize, batched=True, batch_size=None) 
+
+# type(emotions_encoded['train']['input_ids'][0]) == list
+# list to tensor
+emotions_encoded.set_format('torch', columns=['input_ids', 'attention_mask', 'label'])
+```
+
+### Model Fine-Tuning
+
+#### Load Model
+
+DistillBERT-base-uncased是huggingface提供的一个轻量级BERT模型，由知识蒸馏（Knowledge Distillation）技术训练，在保持高性能的同时大幅减少了模型参数，使推理速度更快、计算资源需求更低。
+
+```python
+from transformers import AutoModel
+model_ckpt = '/home/HPC_ASC/bert-distill'
+model = AutoModel.from_pretrained(model_ckpt)
+```
+
+通过`model`可以发现，相较于BERT baseline，这个蒸馏后的模型在Embedding Layer减少了token_type_embedding（只有word embedding和position embedding），将原本12层Transformer Layer改为6层。
+
+```python
+def get_params(model):
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    return params
+
+get_params(model) # return np.int64(66362880) 相较于bert-base-uncased少了约40%参数
+```
+
+接下来加载模型，可以通过`nvidia-smi`或`nvtop`（如果正确安装和配置了的话）可以看到加载到显存中的模型占用约546MiB。
+
+```python
+from transformers import AutoModelForSequenceClassification # 和AutoModel不同，后者没有分类头   -> 下游任务
+modle_ckpt = '/home/HPC_ASC/distilbert-base-uncased'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = AutoModelForSequenceClassification.from_pretrained(model_ckpt, num_labels=num_classes, ignore_mismatched_sizes=True).to(device)
+```
+
+#### Transformers Trainer
+
+我们需要导入并定义huggingface提供的训练API来完成高效的模型训练。在正式定义Trainer前，还需要一个辅助函数来确定Trainer的参数指标：
+
+```python
+def compute_classification_metrics(pred):
+    # pred: PredictionOutput, from trainer.predict(dataset)
+    # true label
+    labels = pred.label_ids
+    # pred
+    preds = pred.predictions.argmax(-1)
+    f1 = f1_score(labels, preds, average="weighted")
+    acc = accuracy_score(labels, preds)
+    precision = precision_score(labels, preds, average="macro")
+    return {"accuracy": acc, "f1": f1, "precision": precision}
+```
+
+接下来正式定义Trainer（在这一步可能会提示你需要安装`transformers[torch]`或`accelerator >= 0.26?`，务必不要直接`pip install transformers[torch]`，这会导致卸载我本地已安装的`torch (v2.7.0)`并安装`torch (v2.6.0)`，从而让`torchvision`等包的版本不匹配，进而引发更多错误），并开始模型训练：
+
+```python
+# https://huggingface.co/docs/transformers/main_classes/trainer
+from transformers import TrainingArguments, Trainer
+
+batch_size = 64
+logging_steps = len(emotions_encoded['train']) // batch_size  # 160,000 // batch_size
+model_name = f'{model_ckpt}_emotion_ft_0531'
+training_args = TrainingArguments(output_dir=model_name,
+                                  num_train_epochs=4,
+                                  learning_rate=2e-5,
+                                  weight_decay=0.01, # 默认使用AdamW的优化算法
+                                  per_device_train_batch_size=batch_size,
+                                  per_device_eval_batch_size=batch_size,
+                                  eval_strategy="epoch",
+                                  disable_tqdm=False,
+                                  logging_steps=logging_steps,
+                                  # write
+                                  push_to_hub=True,
+                                  log_level="error")
+
+trainer = Trainer(model=model,
+                  tokenizer=tokenizer,
+                  train_dataset=emotions_encoded['train'],
+                  eval_dataset=emotions_encoded['validation'],
+                  args=training_args,
+                  compute_metrics=compute_classification_metrics)
+
+trainer.train()
+```
+
+{{< figure src="img/8.png#center" width=400px" title="Model Training">}}
+
+训练好的模型权重会存放在当前目录的`model_name`（bert-distill_emotion_ft_0531）下。
+
+#### Inference
+
+```python
+preds_output = trainer.predict(emotions_encoded['test'])
+y_preds = np.argmax(preds_output.predictions, axis=-1)
+
+y_true = emotions_encoded['validation']['label']
+
+# for classification
+def plot_confusion_matrix(y_preds, y_true, labels):
+    cm = confusion_matrix(y_true, y_preds, normalize="true")
+    fig, ax = plt.subplots(figsize=(4, 4))
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    disp.plot(cmap="Blues", values_format=".2f", ax=ax, colorbar=False)
+    plt.title("Normalized confusion matrix")
+
+plot_confusion_matrix(y_preds, y_true, labels)
+```
+
+{{< figure src="img/9.png#center" width=400px" title="Confusion Matrix">}}
+
+可以写一个辅助函数，将测试集的loss和预测结果映射到测试集中：
+
+```python
+from torch.nn.functional import cross_entropy
+
+def forward_pass_with_label(batch):
+    # Place all input tensors on the same device as the model
+    inputs = {k:v.to(device) for k, v in batch.items()
+              if k in tokenizer.model_input_names}
+    with torch.no_grad():
+        output = model(**inputs)
+        pred_label = torch.argmax(output.logits, axis=-1)
+        loss = cross_entropy(output.logits, batch['label'].to(device),
+                             reduction='none')
+        # Place outputs on CPU for compatibility with other dataset columns
+        return {"loss": loss.cpu().numpy(),
+                "predicted_label": pred_label.cpu().numpy()}
+
+emotions_encoded['validation'] = emotions_encoded['validation'].map(
+    forward_pass_with_label, batched=True, batch_size=16
+)
+```
+
+#### Push into Huggingface
+
+```python
+# 在Jupyter Jotebook中登录huggingface
+# 需要在huggingface注册一个writable token
+from huggingface_hub import notebook_login
+notebook_login()
+
+trainer.push_to_hub(commit_message="Training completed!")
+```
+
+{{< figure src="img/7.png#center" width=400px" title="Huggingface Login">}}
+
+{{< figure src="img/10.png#center" width=600px" title="Huggingface Repo Page">}}
+
+当需要在其他地方调用这个模型时，可以通过transformers包的`pipeline`轻松实现：
+
+```python
+from transformers import pipeline
+
+model_id = "KambriKG/bert-distill_emotion_ft_0531"
+classifier = pipeline("text-classification", model=model_id)
+
+custom_tweet = "I saw a movie today and it was really good"
+preds = classifier(custom_tweet, return_all_scores=True)
+```
 
 ---
 
