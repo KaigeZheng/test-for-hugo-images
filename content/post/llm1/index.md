@@ -11,6 +11,7 @@ categories:
 tags:
     - 文档
     - AI Infra
+draft: trues
 weight: 2
 ---
 
@@ -522,6 +523,88 @@ outputs.loss = ce(logits[0], inputs['labels'][0].view(-1))
 ```python
 ' '.join(tokenizer.convert_ids_to_tokens(torch.argmax(logits[0], dim=1)))
 ```
+
+## Fine-Tuning Task (Text Classification)
+
+这里参考[fine tune transformers 文本分类/情感分析](https://www.bilibili.com/video/BV1tM411L7HE/?spm_id_from=333.1387.collection.video_card.click)教程，实现一个基于BERT的情感分析的全流程全参微调任务。情感分析是文本/序列分类任务的一种，实质上就是对文本/序列进行多分类的自监督学习。
+
+### Data
+
+#### Data Load - emotions
+
+这里选择使用emotions数据集，常用于文本情感分类，识别句子或段落中表达的情感类别，包括6类标签（sadness, joy, love, anger, fear, surprise）。
+
+```python
+from datasets import load_dataset
+emotions = load_dataset("emotions")
+```
+
+通过打印`emotions`可以看到emotions数据集的组成，共有两万条数据，$Size_{Train} : Size_{Vali} : Size_{Test} = 8 : 1 : 1$，每个数据有`text`和`label`两个features（dict of dict）：
+
+```text
+DatasetDict({
+    train: Dataset({
+        features: ['text', 'label'],
+        num_rows: 16000
+    })
+    validation: Dataset({
+        features: ['text', 'label'],
+        num_rows: 2000
+    })
+    test: Dataset({
+        features: ['text', 'label'],
+        num_rows: 2000
+    })
+})
+```
+
+`labels = emotions['train'].features['label'].names`可以查看各个标签。
+
+#### Data Visualization Analysis
+
+简单可视化分析一下数据集，主要任务有：
+
++ 将`dataset`转化为`dataframe`，方便后续操作
+
++ 分析文本长度和标签频率
+
+```python
+# Task 1: dataset -> dataframe
+emotions_df = pd.DataFrame.from_dict(emotions['train']) # 取出训练集
+emotions_df['label_name'] = emotions_df['label'].apply(lambda x: labels[x]) # 加入标签名列
+emotions_df['words per tweet'] = emotions_df['text'].str.split().apply(len) # 统计words数
+```
+
+接下来可以简单分析：
+
+```python
+# 统计标签数
+emotions_df.label.value_counts()
+emotions_df.label_name.value_counts()
+# 查看最长/短文本
+emotions_df['words per tweet'].max()
+emotions_df['words per tweet'].idxmax()
+emotions_df.iloc[...]['text']
+```
+
+简单的可视化：
+
+```python
+# Labels' Freq
+plt.figure(figsize=(4, 3))
+emotions_df['label_name'].value_counts(ascending=True).plot.barh()
+plt.title('freq of labels')
+# Words / Tweet
+plt.figure(figsize=(4, 3))
+emotions_df['words per tweet'] = emotions_df['text'].str.split().apply(len) # 简单统计
+emotions_df.boxplot('words per tweet', by='label_name',
+                    showfliers=True, grid=False, color='black')
+plt.suptitle('')
+plt.xlabel('')
+```
+
+{{< figure src="img/5.png#center" width=300px" title="标签频率">}}
+{{< figure src="img/6.png#center" width=300px" title="文本长度">}}
 
 ---
 
