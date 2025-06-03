@@ -2,13 +2,12 @@
 title: "日志|Logs"
 description: 记录博客的过去、现在和将来
 slug: "devlog"
-date: 2025-05-12 17:53:10+0800
+date: 2025-06-03 22:07:10+0800
 menu:
     main: 
         weight: 5
         params:
             icon: brand-logs
-# comments: true
 image: img/cover.png
 ---
 
@@ -66,7 +65,9 @@ icon（github、知乎、微信等）来自[tabler icons](https://www.iconfont.c
 
 ## 博文更新日志
 
-+ `2025/05/28` 上传了第十三篇博文，[《从Transformer开始探索BERT》](http://kambri.top/p/bert/)，记录了学习BERT的过程。
++ `2025/06/03` 上传了第十四篇博文，[《手搓Transformer：深入架构细节T》](http://kambri.top/p/llm2/)，记录了深度学习和手搓Transformer架构代码的过程。
+
++ `2025/05/28` 上传了第十三篇博文，[《从Transformer开始探索BERT》](http://kambri.top/p/llm1/)，记录了学习BERT的过程。
 
 + `2025/05/11` 上传了第十二篇博文，[《高性能集群运维——软件环境（Modules、MPI、oneAPI）》](http://kambri.top/p/ops2/)，记录了配置软件环境的过程。
 

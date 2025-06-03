@@ -12,7 +12,6 @@ tags:
     - 文档
     - AI Infra
 weight: 2
-# draft: true
 ---
 
 ## Self-Attention
