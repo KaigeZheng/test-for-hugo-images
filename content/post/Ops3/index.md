@@ -111,7 +111,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 {{< figure src="img/4.jpg#center" width=600px" title="远程主机密钥变化警告">}}
 
 ```zsh
-docker run -itd -p 2200:22 --name ubuntu-dev -v /Users/kambri/Documents/ubuntu_docker:/home/dev b59d21599a2b
+docker run -itd -p 2200:22 --name ubuntu-dev -v /Users/kambri/Documents/ubuntu_docker:/home/dev <IMAGE ID>
 ```
 
 {{< figure src="img/5.jpg#center" width=600px" title="MacOS Subsystem for Linux, 启动!">}}

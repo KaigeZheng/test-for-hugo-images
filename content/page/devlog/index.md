@@ -65,7 +65,9 @@ icon（github、知乎、微信等）来自[tabler icons](https://www.iconfont.c
 
 ## 博文更新日志
 
-+ `2025/06/03` 上传了第十四篇博文，[《手搓Transformer：深入架构细节T》](http://kambri.top/p/llm2/)，记录了深度学习和手搓Transformer架构代码的过程。
++ `2025/06/12' 上传了第十五篇博文，[《对MacOS的初步探索：MacOS "Subsystem" for Linux》](http://kambri.top/p/ops3/)。
+
++ `2025/06/03` 上传了第十四篇博文，[《手搓Transformer：深入架构细节》](http://kambri.top/p/llm2/)，记录了深度学习和手搓Transformer架构代码的过程。
 
 + `2025/05/28` 上传了第十三篇博文，[《从Transformer开始探索BERT》](http://kambri.top/p/llm1/)，记录了学习BERT的过程。
 
