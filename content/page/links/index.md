@@ -6,11 +6,15 @@ links:
   - title: 本站点的GitHub仓库
     description: 本站点托管于GitHub Pages
     website: https://github.com/KaigeZheng/KaigeZheng.github.io
-    image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+    image: img/github.png
   - title: HDACP实验室
     description: 青海大学高性能与云计算研究所HDACP实验室
     website: https://www.qhu-hdacp.cn/
-    image: "https://www.qhu-hdacp.cn/HDACP.png"
+    image: img/HDACP.png
+  - title: WeAI：开源的轻量级AI对话微信小程序
+    description: 开发了一款AI对话助手微信小程序（可以用WeCAI搜索到），已开源，欢迎star🌟
+    website: https://github.com/KaigeZheng/WeAI-Chat
+    image: img/WeAIChat.png
 menu:
     main: 
         weight: 4
