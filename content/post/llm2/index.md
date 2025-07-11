@@ -86,7 +86,7 @@ def scaled_dot_product_attention(query, key, value, attn_mask=None, dropout_p=0.
 
 {{< figure src="img/1.png#center" width=600px" title="Self-Attention">}}
 
-首先需要通过`AttentionHead`类实现一个单头注意力机（SHA）制作为MHA的组件，每个SHA会将`embed_dim`维度的信息映射到`head_dim`维度上：
+首先需要通过`AttentionHead`类实现一个单头注意力机制（SHA）作为MHA的组件，每个SHA会将`embed_dim`维度的信息映射到`head_dim`维度上：
 
 ```python
 class AttentionHead(nn.Module):

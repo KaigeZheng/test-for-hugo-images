@@ -3725,7 +3725,7 @@ public:
 
 [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/description/?envType=study-plan-v2&envId=top-100-liked)
 
-给定包含非负整数的mxn网格，找到一条从左上角到右虾饺的路径使路径上的数字综合为最小（只能向下或向右移动一步）。
+给定包含非负整数的mxn网格，找到一条从左上角到右下角的路径使路径上的数字综合为最小（只能向下或向右移动一步）。
 
 很标准的写法，注意一下细节即可。
 

@@ -286,6 +286,31 @@ sudo reboot
 
 #### 安装CUDA
 
+CUDA：[CUDA Toolkit 12.6 Update 3 Downloads | NVIDIA Developer](https://developer.nvidia.com/cuda-downloads)
+
 CUDA Toolkit：[CUDA Toolkit Archive | NVIDIA Developer](https://developer.nvidia.com/cuda-toolkit-archive)
 
-CUDA：[CUDA Toolkit 12.6 Update 3 Downloads | NVIDIA Developer](https://developer.nvidia.com/cuda-downloads)
+`NVCC`需要完整的cuda toolkit，只需要在[官网](https://developer.nvidia.com/cuda-downloads)找到对应cuda版本的下载版本（建议通过runfile(local)方式），按照提供的命令`wget`和`sudo run`即可：
+
+```shell
+# 以CUDA Toolkit 12.2为例
+wget https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+sudo sh cuda_12.9.1_575.57.08_linux.run
+```
+
+不需要重新安装驱动，安装完成后写入环境变量：
+
+```shell
+echo 'export PATH=/usr/local/cuda-12.2/bin:$PATH' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/local/cuda-12.2/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+如果望默认用`/usr/local/cuda`路径访问，也可以创建软链接:
+
+```shell
+sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
+echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
+```
