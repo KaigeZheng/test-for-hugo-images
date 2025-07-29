@@ -65,6 +65,8 @@ icon（github、知乎、微信等）来自[tabler icons](https://www.iconfont.c
 
 ## 博文更新日志
 
++ `2025/07/30` 上传了第十六篇博文，[《并发环境下的队列优化——无锁队列》](http://kambri.top/p/hpc1/)，记录了学习无锁队列的过程。
+
 + `2025/06/12' 上传了第十五篇博文，[《对MacOS的初步探索：MacOS "Subsystem" for Linux》](http://kambri.top/p/ops3/)。
 
 + `2025/06/03` 上传了第十四篇博文，[《手搓Transformer：深入架构细节》](http://kambri.top/p/llm2/)，记录了深度学习和手搓Transformer架构代码的过程。
