@@ -1,7 +1,7 @@
 ---
 title: 并发环境下的队列优化——无锁队列
 description: 高性能计算学习笔记（一）
-slug: llm3
+slug: hpc1
 date: 2025-07-30 00:23:00+0800
 math: true
 image: img/cover.png
