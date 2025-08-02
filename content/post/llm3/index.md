@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-01 23:37:00+0800
+date: 2025-08-02 23:54:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -171,12 +171,78 @@ $$
 Memory = 2 \times batch\_size \times seq\_len \times num\_layers \times num\_heads \times head\_dims \times dtype\_size
 $$
 
-#### Multi Query Attention
+#### MQA
 
-#### Grouped Query Attention
+Multi-Query Attention (MQA)是Google在2019年于[《Fast Transformer Decoding: One Write-Head is All You Need》](https://arxiv.org/abs/1911.02150)提出的一种高效注意力机制，旨在减少推理过程中的计算和内存开销。与传统MHA不同，MQA保留多个Query头，但所有注意力头共享同一组Key和Value，这种结构显著减少了KV Cache的Memory开销，同时保持了MHA相近的性能表现。
+
+下面是基于PyTorch的一个简单实现（还没实现Casual Mask）：
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class MultiQueryAttention(nn.Module):
+    def __init__(self, embed_dim, num_heads):
+        super().__init__()
+
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        self.head_dim = embed_dim // num_heads
+
+        # 多个Query头
+        self.q_proj = nn.Linear(embed_dim, embed_dim)
+        # 共享的Key和Value
+        self.k_proj = nn.Linear(embed_dim, self.head_dim)
+        self.v_proj = nn.Linear(embed_dim, self.head_dim)
+
+        self.out_proj = nn.Linear(embed_dim, embed_dim)
+
+    def forward(self, x, mask=None):
+        B, T, C = x.size()
+
+        # Q: (B, T, num_heads, head_dim)
+        q = self.q_proj(x).view(B, T, self.num_heads, self.head_dim).transpose(1, 2) # (B, num_heads, T, head_dim)
+
+        # K, V: shared (B, T, head_dim)->(B, 1, T, head_dim)
+        k = self.k_proj(x).unsqueeze(1)
+        v = self.v_proj(x).unsqueeze(1)
+
+        # Attention Score: (B, num_heads, T, T)
+        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        if mask is not None:
+            attn_scores = attn_scores.masked_fill(mask == 0, float('-inf'))
+        attn_weights = F.softmax(attn_scores, dim=-1)
+
+        # Attention output: (B, num_heads, T, head_dim)
+        attn_output = torch.matmul(attn_weights, v)
+
+        # 合并头->(B, T, embed_dim)
+        attn_output = attn_output.transpose(1, 2).contiguous().view(B, T, C)
+
+        return self.out_proj(attn_output)
+```
+
+#### GQA
+
+Grouped-Query Attention (GQA)Google与在023年于[GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)提出的一种介于MHA和MQA之间的注意力机制，让多个Query头共享同一组Key和Value，旨在保留部分表达能力的同时大幅减少计算和内存开销。
+
+{{< figure src="img/1.jpg#center" width=600px" title="Overview of grouped-query method">}}
+
+源码上，只在Huggingface的仓库里找到了[sdpa_attention_paged_forward](https://github.com/huggingface/transformers/blob/6dfd561d9cd722dfc09f702355518c6d09b9b4e3/src/transformers/integrations/sdpa_paged.py#L6-L51)的实现，看上去挺GQA的。
+
+核心思路是：
+
+- 先用`repeat_kv`将KV head复制`num_attention_heads // num_key_value_heads`次（从`(B, num_key_value_heads, L, D)`到`(B, num_attention_heads, L, D)`）
+
+- 支持KV Cache的SDPA
 
 ## Reference
 
 [大模型推理加速：看图学KV Cache](https://zhuanlan.zhihu.com/p/662498827)
 
 [LM(20)：漫谈 KV Cache 优化方法，深度理解 StreamingLLM](https://zhuanlan.zhihu.com/p/659770503)
+
+[Fast Transformer Decoding: One Write-Head is All You Need](https://arxiv.org/abs/1911.02150)
+
+[GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)
