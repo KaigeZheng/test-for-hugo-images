@@ -259,14 +259,14 @@ class AttentionHead(nn.Module):
         self.Wk = nn.Linear(embed_dim, head_dim)
         self.Wv = nn.Linear(embed_dim, head_dim)
         
-    def forward(self, query_input, key_value_input):
+    def forward(self, query_input, key_value_input, mask=None):
         # Project Q
         q = self.Wq(query_input)
         # Project K
         k = self.Wk(key_value_input)
         # Project V
         v = self.Wv(key_value_input)
-        attn_outputs = scaled_dot_product_attention(q, k, v)
+        attn_outputs = scaled_dot_product_attention(q, k, v, mask)
         return attn_outputs
 
 class MultiHeadAttention(nn.Module):

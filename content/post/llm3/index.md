@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-02 23:54:00+0800
+date: 2025-08-03 23:56:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -15,6 +15,66 @@ weight: 2
 ---
 
 计划在这篇博客里调研并粗略地学习一下到目前为止比较有影响力的AI Infra工作（类似Survey），并慢慢补充丰富。Anyway，迈出行动的第一步最难。
+
+## Model Parameters
+
+### Parameter Estimation
+
+1B = 1 Billion = 十亿
+
+假设模型层数为$N$，隐藏层维度为$H$，接下来考虑一层Transformer层的参数量估算：
+
+- 自注意力层：（不需要考虑MHA的情况，因为多头concat起来的为度就等于隐藏层维度）需要注意的是这里包括一次注意力计算和一次线性映射，因此涉及四个可训练参数$W_Q$、$W_K$、$W_V$和$W_O$，因此注意力层的可训练参数量为$4H^2 + 4H$。
+
+$$Attention(Q, K, V)=softmax(\frac{QK^{T}}{\sqrt[]{d_{k}} })V \newline Q=W_{Q}X+b_{Q}, K=W_{K}X+b_{K}, V=W_{V}X+b_{V}, O = W_{O}Attention_{O}+b_{O}$$
+
+- 前馈网络层：FFN层包括一次线性升维和一次线性降维，设计两个可训练参数$W_{1}$和$W_{2}$，可训练参数量为$(H\times 4H + 4H) + (4H \times H + H) = 8H^{2} + 5H$。
+
+$$FFN(x) = GeLU(xW_{1}+b_{1})W_{2}+b_{2}$$
+
+- 残差连接和层归一化：Add & Norm层（主要是LN层）涉及两个可训练向量参数$\alpha$和$b$，即2H。
+
+$$Y = Attention(X) + X \newline LN(Y) = \alpha \frac{Y - \mu}{\sigma} + b$$
+
+综上，一层Transformer层由一层Attention层、一层FFN层和两层Add & Norm层组成，可训练参数量为$12H^{2} + 13H$，可以近似为$12H^{2}$。
+
+### Conputation Estimation
+
+> AxB和BxC的矩阵相乘，每个输出元素需要进行$n$次乘法和$n-1$次加法，$\approx 2n FLOPs$；整个矩阵共有AxC个输出元素，因此总$FLOPs \approx 2ABC$，可以近似为$ABC$。因此估算参数时，主要关注矩阵乘或向量矩阵乘的维度即可。注意$W_{Q/K/V}$的维度是$HxH$，而$Q/K/V$的维度是$LxH$。
+
+接下来估算计算量，由于LayerNorm、Dropout等计算量较小，暂时不考虑。设模型层数为$N$，隐藏层维度为$H$，批量大小为$B$，序列长度为$L$：
+
+- 自注意力层
+
+1. （LHxHH=LH）线性投影QKV：每个投影是$H\times H$，应用于每个token就是$BLH^{2}$，总共3个矩阵，因此$FLOPs=3BLH^{2}$
+
+2. （LHxHL=LL）Attention Score ($QK^{T}$)：每个token对应一个$L\times L$的注意力矩阵，需要做$H$次乘加，约为$BHL^{2}$
+
+3. （——————）Softmax和Scaling：Softmax涉及取指、求和、逐元素除和、数值稳定的计算，这里只能估计为$xBL^{2}$，相比SDPA可忽略不计
+
+4. （LLxLH=LH）Attention Output与V相乘：显然是$BHL^{2}$
+
+5. （LHxHH=LH）输出线性层$W_{O}$：显然是$BLH^{2}$
+
+因此，自注意力层的总FLOPs：
+
+$$\approx (3BLH^{2})+(2BHL^{2})+(BLH^{2})=4BLH^{2}+2BHL^{2}$$
+
+- 前馈网络层：
+
+1. 升维（$H$->$4H$）：$FLOPs=BLH(4H)$
+
+2. 降维（$4H$->$H$）：$FLOPs=BL(4H)H$
+
+（当然还有GeLU激活，不过是线性的计算量，可以忽略不计）因此，FFN层的总Flops：
+
+$$\approx 8BLH^{2}$$
+
+综上，$Total\ FLOPs \approx 12BLH^{2} + 2BHL^{2}$$。（理论上应该再乘以2）
+
+## Memory Estimation
+
+
 
 ## Inference Optimization
 
