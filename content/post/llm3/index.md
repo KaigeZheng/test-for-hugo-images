@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-03 23:56:00+0800
+date: 2025-08-04 17:02:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -38,7 +38,7 @@ $$Y = Attention(X) + X \newline LN(Y) = \alpha \frac{Y - \mu}{\sigma} + b$$
 
 综上，一层Transformer层由一层Attention层、一层FFN层和两层Add & Norm层组成，可训练参数量为$12H^{2} + 13H$，可以近似为$12H^{2}$。
 
-### Conputation Estimation
+### Computation Estimation
 
 > AxB和BxC的矩阵相乘，每个输出元素需要进行$n$次乘法和$n-1$次加法，$\approx 2n FLOPs$；整个矩阵共有AxC个输出元素，因此总$FLOPs \approx 2ABC$，可以近似为$ABC$。因此估算参数时，主要关注矩阵乘或向量矩阵乘的维度即可。注意$W_{Q/K/V}$的维度是$HxH$，而$Q/K/V$的维度是$LxH$。
 
@@ -297,6 +297,94 @@ Grouped-Query Attention (GQA)Google与在023年于[GQA: Training Generalized Mul
 
 - 支持KV Cache的SDPA
 
+## Training Optimization
+
+### Parallel Computting (on Data)
+
+#### DP
+
+**数据并行（DP, Data Parallel）**：模型副本在每个GPU上各自独立地前向传播，梯度会聚合（AllReduce）到主GPU进行参数更新。缺点是非跨进程，只支持单机多卡；梯度聚合会发生在主设备，导致通信瓶颈和负载不均衡。
+
+实现上较为简单:
+
+```python
+model = ...()
+model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3])
+```
+
+不过PyTorch建议多卡并行的时候使用DPP，即使只有一个节点（DP的性能较DDP更差，因为主卡负载很不均衡，单进程多线程环境下设计GIL竞争，且可扩展性不如DDP），源码实现见[这里](https://github.com/pytorch/pytorch/blob/978e3a91421e82fc95b34e75efd6324e3e89e755/torch/nn/parallel/data_parallel.py#L53)，更加底层的Operator在`torch.nn.parallel.scatter_gather/_functions/comm`下（如scatter、gather等）。
+
+#### DDP
+
+**分布式数据并行（DDP, Distributed Data Parallel）**：每个进程对应一个GPU，每个GPU上都有模型副本，梯度通过AllReduce同步，每个金层都参与参数更新（每个GPU独立进行前向、计算loss、计算梯度，并在AllReduce后通过平均梯度更新）。
+
+实现上可以通过手动设置并行（多个terminal设置RANK、WORLD_SIZE、MASTER_ADDR、MASTER_PORT等环境变量并启动脚本）或用`torchrun`自动管理环境变量（`torchrun --nproc_per_node=... <script>`）：
+
+```python
+import os
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+os.environ['MASTER_ADDR'] = 'localhost'
+os.environ['MASTER_PORT'] = '...'
+
+dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
+model = ...().to(rank)
+model = DDP(model, device_ids=[rank])
+...
+dist.destroy_process_group()
+```
+
+源码参考[这里](https://github.com/pytorch/pytorch/blob/978e3a91421e82fc95b34e75efd6324e3e89e755/torch/nn/parallel/distributed.py#L327)。DDP可以使用高效的通信后端（如NCCL），没有主从瓶颈（支持单机多卡/多机多卡），还是非常实用的。
+
+#### FSDP
+
+**全分片数据并行（FSDP, Fully Sharded Data Parallel）**：模型权重按参数维度切分到多个GPU上（shard），前向传播时重新聚合参数（gather），反向传播后再切分（reshard），大幅减少显存占用，主要通过`torch.nn.distributed.fsdp.FullyShardedDataParallel`来实现，源码参考[这里](https://github.com/pytorch/pytorch/blob/978e3a91421e82fc95b34e75efd6324e3e89e755/torch/distributed/fsdp/fully_sharded_data_parallel.py#L116)。
+
+### Parallel Computting (on Model)
+
+{{< figure src="img/2.jpg#center" width=600px" title="Existing parallelism for distributed training (sorry我没找到图片来源) ">}}
+
+#### TP
+
+**张量并行（TP, Tensor Parallel）**：是一种层内并行（Intra-Layer Parallelism）策略，将模型中的一个层（如MLP层、Attention层）的内部计算划分到多个设备上，多个设备共同完成该层前向和反向传播。这么做可以突破显存的限制，但是会对延迟较敏感。
+
+- Column-wise Parallelism (切列，维度完整)
+
+$$W = [W_{1}, W_{2}] \newline Y_{i}=XW_{i}^{T}\ (on\ each\ GPU) \newline Y = Y_{1} + Y_{2}\ (AllReduce)$$
+
+- Row-wise Parallelism (切行)
+
+$$W=\begin{bmatrix}W_{1} \\W_{2}\end{bmatrix} \newline Y_{i}=XW_{i}^{T}\ (on\ each \ GPU) \newline Y=concat(Y_{1}, Y_{2})\ (AllGather)$$
+
+#### PP
+
+**流水线并行（PP, Pipeline Parallel）**：是一种层间并行（Inter-Layer Parallelism）策略，将模型按顺序划分为多个stage，不同GPU执行不同的stage，多个micro-batch以流水线方式通过模型。
+
+支持极大模型（层数多），显存需求分布在各stage，且跨GPU通信压力小；但是存在pipeline bubble（起始阶段GPU空闲，影响吞吐）
+
+## Quantization
+
+### Precision Formats
+
+{{< figure src="img/3.png#center" width=300px" title="TF32 strikes a balance that delivers performance with range and accuracy">}}
+
+IEEE 754标准中浮点数由三部分组成：S符号位、E指数位、M尾数位，接下来介绍各种精度格式：
+
+- `FP32` 标准的IEEE 754单精度浮点格式，1位符号位+8位指数位+23位位数（下文用[S, E, M]来表示），精度较高，适用于所有主流硬件（CPU、GPU、TPU等）
+
+- `TP32` NVIDIA在Ampere架构引入的混合格式，[1, 8, 10]，截断了尾数位（减少乘加复杂度），支持Tensor Core优化，精度介于FP32和FP16之间，常在训练时作为FP32替换
+
+- `FP16` 16-bit半精度浮点数，[1, 5, 10]
+
+- `BF16` Google TPU推出的Brain Float 16，[1, 8, 7]，常用于混合精度训练
+
+- `FP8` [1, 4, 3]或[1, 5, 2]，需要Hopper架构GPU支持
+
+- `INT8` 8-bit整型
+
+- `FP4` [1, 2, 1]
+
 ## Reference
 
 [大模型推理加速：看图学KV Cache](https://zhuanlan.zhihu.com/p/662498827)
@@ -306,3 +394,5 @@ Grouped-Query Attention (GQA)Google与在023年于[GQA: Training Generalized Mul
 [Fast Transformer Decoding: One Write-Head is All You Need](https://arxiv.org/abs/1911.02150)
 
 [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)
+
+[PyTorch 分布式概览](https://pytorch.ac.cn/tutorials/beginner/dist_overview.html)
