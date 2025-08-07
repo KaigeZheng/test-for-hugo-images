@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-04 17:02:00+0800
+date: 2025-08-07 23:56:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -297,6 +297,43 @@ Grouped-Query Attention (GQA)Google与在023年于[GQA: Training Generalized Mul
 
 - 支持KV Cache的SDPA
 
+### FlashAttention
+
+**FlashAttention**由Tri Dao等在2022年于《FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness》提出，并在2023年于《FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning
+》提出v2版本，2024年于《FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision》提出v3版本。
+
+#### Preliminaries (Online Softmax)
+
+**Naive Softmax**涉及两次read（遍历求sum和逐元素除sum(exp)）和一次write（结果写回），数学公式如下：
+
+$$softmax(x_{i}) = \frac{e^{x_{i}}}{\Sigma _{j=1}^{n}e^{x_{j}}}$$
+
+如果$x$太大，$e^x$会上溢，而safe softmax解决了这一问题。
+
+**Safe Softmax**涉及三次read（还需要遍历一次减去max）和一次write，目的是为了避免数值溢出，数学公式如下：
+
+$$softmax(x_{i}) = \frac{e^{x_{i} - max(x)}}{\Sigma _{j=1}^{n}e^{x_{j} - max(x)}}$$
+
+但是需要多次遍历数据，性能较差，而online softmax解决了这一问题。
+
+**Online Softmax**只需要一次read（遍历一次x并维护**最大值**和**归一化因子**）和一次write，核心思路如下：
+
+- **在线维护**两个变量（$m_t$，当前前$t$个元素的最大值；$d_t$，当前前$t$个元素的归一化因子）
+
+- 初始化
+
+    $m_0=-\infty, d_0=0$
+
+- 遍历并维护变量
+
+1. 更新最大值：$m_t=max(m_{t-1}, x_t)$
+
+2. 更新归一化因子：
+
+    如果$m_{t}=m_{t-1}$，那么$d_t=d_{t-1}+e^{x_t - m_t}$；
+
+    否则，$d_t=d_{t-1}\cdot e^{m_{t-1}-m_t}+e^{x_t - m_t}$（其实两式是等价的）
+
 ## Training Optimization
 
 ### Parallel Computting (on Data)
@@ -396,3 +433,11 @@ IEEE 754标准中浮点数由三部分组成：S符号位、E指数位、M尾数
 [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)
 
 [PyTorch 分布式概览](https://pytorch.ac.cn/tutorials/beginner/dist_overview.html)
+
+[FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135)
+
+[FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning](https://arxiv.org/abs/2307.08691)
+
+[FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision](https://arxiv.org/abs/2407.08608)
+
+[Online normalizer calculation for softmax](hhttps://arxiv.org/abs/1805.02867)
