@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-07 23:56:00+0800
+date: 2025-08-08 00:50:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -316,9 +316,9 @@ $$softmax(x_{i}) = \frac{e^{x_{i} - max(x)}}{\Sigma _{j=1}^{n}e^{x_{j} - max(x)}
 
 但是需要多次遍历数据，性能较差，而online softmax解决了这一问题。
 
-**Online Softmax**只需要一次read（遍历一次x并维护**最大值**和**归一化因子**）和一次write，核心思路如下：
+**Online Softmax**只需要两次read（遍历一次x并维护**最大值**和**归一化因子**）和一次write，核心思路如下：
 
-- **在线维护**两个变量（$m_t$，当前前$t$个元素的最大值；$d_t$，当前前$t$个元素的归一化因子）
+- **在线维护**变量（$m_t$，当前前$t$个元素的最大值；$d_t$，当前前$t$个元素的归一化因子）
 
 - 初始化
 
@@ -326,13 +326,45 @@ $$softmax(x_{i}) = \frac{e^{x_{i} - max(x)}}{\Sigma _{j=1}^{n}e^{x_{j} - max(x)}
 
 - 遍历并维护变量
 
-1. 更新最大值：$m_t=max(m_{t-1}, x_t)$
+1. 更新最大值：
 
-2. 更新归一化因子：
+    $m_t=max(m_{t-1}, x_t)$
 
-    如果$m_{t}=m_{t-1}$，那么$d_t=d_{t-1}+e^{x_t - m_t}$；
+2. 更新归一化因子（递推）【难点】：
 
-    否则，$d_t=d_{t-1}\cdot e^{m_{t-1}-m_t}+e^{x_t - m_t}$（其实两式是等价的）
+    $d_t=d_{t-1}\cdot e^{m_{t-1}-m_t}+e^{x_t - m_t}(=\Sigma_{j=1}^{t-1}e^{x_j-m_{t-1}}\cdot e^{m_{t-1}-m_t}+e^{x_t - m_t})$
+
+这里的公式推导非常巧妙，应用了**同底指数相乘等于两个指数幂相加**，论文的推导如下，**$d_{t}$代表前$t$个数与最大值（局部，即$m_t$）之差的指数和**：
+
+$$d_t = d_{t-1}\times e^{m_{t-1}-m_t} + e^{x_t-m_t} \newline =(\Sigma_{j=1}^{t-1}e^{x_j-m_{t-1}}) \times e^{m_{t-1}-m_t} + e^{x_t-m_t} \newline = \Sigma_{j=1}^{t-1}e^{x_j-m_t}+e^{x_t-m_t} \newline = \Sigma_{j=1}^{t}e^{x_j-m_t}$$
+
+> 可以这么理解：每次更新归一化因子时，都乘以了$e^{m_{t-1} - m_{t}}$，那么最后这个因子会是$e^{0-m_{global}}$，正是分母$e^{x_{t}-m_{global}}$的一部分，如此巧妙地将全局最大值保留到了遍历结束，而且在递推中的每一步都纠正了之前的局部最大值
+
+online softmax的伪代码如下，实现上还是比较简单的：
+
+{{< figure src="img/4.jpg#center" width=500px" title="Pseudocode of Online Softmax">}}
+
+参考@TaurusMoon的实现写了C++的online softmax kernel：
+
+```cpp
+using namespace std;
+
+template<typename T>
+void OnlineSoftmax(T* dst, const T* src, int n) {
+    T m = -numeric_limits<T>::infinity();
+    T d = 0.0f;
+
+    for (int i = 0; i < n; +i) {
+        T m_update = max(m, src[i]);
+        d = d * exp(m - m_update) + exp(src[i] - m_update);
+        m = m_update;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        dst[i] = exp(src[i] - m) / d;
+    }
+}
+```
 
 ## Training Optimization
 
@@ -441,3 +473,5 @@ IEEE 754标准中浮点数由三部分组成：S符号位、E指数位、M尾数
 [FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision](https://arxiv.org/abs/2407.08608)
 
 [Online normalizer calculation for softmax](hhttps://arxiv.org/abs/1805.02867)
+
+[一心二用的Online Softmax](https://zhuanlan.zhihu.com/p/638788074)
