@@ -2,7 +2,7 @@
 title: Infra入门——An Overview of AI Infra
 description: 大模型学习笔记（三）
 slug: llm3
-date: 2025-08-08 00:50:00+0800
+date: 2025-08-15 16:32:00+0800
 math: true
 image: img/cover.jpg
 categories:
@@ -297,12 +297,12 @@ Grouped-Query Attention (GQA)Google与在023年于[GQA: Training Generalized Mul
 
 - 支持KV Cache的SDPA
 
-### FlashAttention
+### Preliminaries (FlashAttention)
 
 **FlashAttention**由Tri Dao等在2022年于《FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness》提出，并在2023年于《FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning
 》提出v2版本，2024年于《FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision》提出v3版本。
 
-#### Preliminaries (Online Softmax)
+#### Online Softmax
 
 **Naive Softmax**涉及两次read（遍历求sum和逐元素除sum(exp)）和一次write（结果写回），数学公式如下：
 
@@ -366,6 +366,48 @@ void OnlineSoftmax(T* dst, const T* src, int n) {
 }
 ```
 
+#### GPU Memory Architecture
+
+- 显存/高带宽内存（**HBM**, High Bandwidth Memory）是封装在GPU Core外的DRAM（动态存储，需要周期性刷新），通过超宽总线连接GPU Core，大容量的同时延迟也相对较大。
+
+- 静态内存（**SRAM**, Static Random Access Memory）**是封装在GPU Core内部的SRAM（静态存储），如Register、Shared Memory、L1/L2 Cache。
+
+{{< figure src="img/5.jpg#center" width=300px" title="Memory/Bandwidth Architcture of A100">}}
+
+#### Operator
+
+算子主要可以分为两类：
+
+- **计算受限型**：如GEMM等
+
+- **内存受限型**：主要是element-wise类（如Activation、Dropout、Maskibg等）和reduction类（如Sum、Softmax、LayerNorm等）
+
+### FlashAttention
+
+#### FlashAttention-v1
+
+Transformer的核心计算是Attention，朴素的Attention计算步骤如下，其中一般$N \gg d$，复杂度是$N^2$，在长序列频繁读写（5read & 3 write）大矩阵时非常依赖HBM：
+
+{{< figure src="img/6.jpg#center" width=500px" title="Standard Attention Implementation">}}
+
+FlashAttention的核心思路就是提高Attention算子的SRAM利用率（将输入的QKV矩阵从HBM加载到SRAM中计算），减少HBM访存。
+
+- **Tiling**
+
+常规的row-wise softmax不适合分块的算法，因此这里需要使用online softmax，在分块后的范围内，片上计算max和rowsum，并在通信后计算全局的max和scale factor。
+
+- **Recomputation**
+
+在反向传播的优化，计算梯度需要用到QK计算的attention score ($S$)和softmax后的attention score ($P$)。FlashAttention通过存储Attention的输出结果($O$)和归一化统计量$(m, l)$来快速计算$S$和$P$，避免了用$QKV$的重复计算。
+
+- **Kernel Fusion**
+
+很常见的优化，减少了多余的HBM写回和重新加载。
+
+{{< figure src="img/7.jpg#center" width=300px" title="PyTorch vs. FlashAttention on GPT-2">}}
+
+总结一下，FlashAttention可以让计算提速2-4倍，节约10倍以上内存（主要是边存变算，不用存储复杂度为$N^2$的$QKV$，转而存储复杂度为$Nd$的输出结果和统计量）。
+
 ## Training Optimization
 
 ### Parallel Computting (on Data)
@@ -409,6 +451,8 @@ dist.destroy_process_group()
 #### FSDP
 
 **全分片数据并行（FSDP, Fully Sharded Data Parallel）**：模型权重按参数维度切分到多个GPU上（shard），前向传播时重新聚合参数（gather），反向传播后再切分（reshard），大幅减少显存占用，主要通过`torch.nn.distributed.fsdp.FullyShardedDataParallel`来实现，源码参考[这里](https://github.com/pytorch/pytorch/blob/978e3a91421e82fc95b34e75efd6324e3e89e755/torch/distributed/fsdp/fully_sharded_data_parallel.py#L116)。
+
+> 本质上FSDP还是数据并行，知识参数分别有点模型并行的味道
 
 ### Parallel Computting (on Model)
 
