@@ -1,2 +1,4 @@
 github.com/CaiJimmy/hugo-theme-stack/v3 v3.30.0 h1:uITC7EKGyfPjyi3C5At++E0Uu1qQXtqiwMV4pd7LkLs=
 github.com/CaiJimmy/hugo-theme-stack/v3 v3.30.0/go.mod h1:IPmCXiIxlFSLFYS0tOmYP6ySLviyeNVSabyvSuaxD+I=
+github.com/hugomods/images v0.12.3 h1:FiHZnFgbxn4SpxdY8harOxhYKA8WhAgibJoHhIe9sdU=
+github.com/hugomods/images v0.12.3/go.mod h1:U6Gwj16LKvk66rOMyGFrnF6f0aV8lT89lqOsckOAjYY=
